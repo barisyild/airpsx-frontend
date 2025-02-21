@@ -1,0 +1,194 @@
+.system-info {
+    position: absolute;
+    right: 20px;
+    bottom: 60px; /* Above the TaskBar */
+    width: 250px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    backdrop-filter: blur(10px);
+    user-select: none;
+    transition: all 0.3s ease;
+  }
+  
+  .system-info.dark {
+    background: rgba(45, 45, 45, 0.9);
+    color: #fff;
+  }
+  
+  .system-info-header {
+    font-size: 16px;
+    font-weight: bold;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+  }
+  
+  .system-info.dark .system-info-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .info-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .info-group:last-child {
+    margin-bottom: 0;
+  }
+  
+  .info-label {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.7);
+  }
+  
+  .info-value {
+    font-size: 14px;
+    font-weight: 500;
+    font-family: monospace;
+    transition: color 0.3s ease;
+  }
+  
+  .info-value.updated {
+    color: #27ae60;
+  }
+  
+  .info-value.warning {
+    color: #e74c3c;
+  }
+  
+  .system-info.dark .info-label {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .system-info-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .error-icon {
+    font-size: 24px;
+    animation: pulse 2s infinite;
+  }
+  
+  .error-message {
+    font-size: 16px;
+    font-weight: 500;
+    color: #e74c3c;
+  }
+  
+  .system-info.dark .error-message {
+    color: #ff6b6b;
+  }
+  
+  .error-detail {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 1.4;
+  }
+  
+  .system-info.dark .error-detail {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
+  .info-section {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .info-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .system-info.dark .info-section {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2980b9;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .system-info.dark .section-title {
+    color: #3498db;
+  }
+  
+  .game-info {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 10px;
+  }
+  
+  .game-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+  }
+  
+  .game-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .system-info.dark .game-image {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .game-details {
+    flex: 1;
+    min-width: 0; /* Flexbox overflow fix */
+  }
+  
+  .game-details .info-group {
+    margin-bottom: 8px;
+  }
+  
+  .game-details .info-value {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  .info-value.uptime {
+    font-size: 13px;
+    color: #2980b9;
+    font-weight: 600;
+    font-family: "Courier New", monospace;
+    letter-spacing: 0.5px;
+  }
+  
+  .system-info.dark .info-value.uptime {
+    color: #3498db;
+  }
+  

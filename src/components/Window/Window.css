@@ -1,0 +1,22 @@
+/* Special styles for the console */
+.window.console {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.window.console .window-header {
+  padding: 15px 20px; /* Bigger Header */
+}
+
+.window.console .window-controls button {
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  margin-left: 10px;
+}
+
+/* Remove resize feature for console */
+.window.console .window-resize {
+  display: none;
+}

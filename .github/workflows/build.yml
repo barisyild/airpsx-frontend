@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clone Repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Install Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 # Specify Node.js Version
+
+      # 3. Install Dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Build for production
+      - name: Build for production
+        run: npm run build
+
+      # 5. Check build output
+      - name: List build output
+        run: ls -la dist

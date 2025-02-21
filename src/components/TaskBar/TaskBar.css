@@ -1,0 +1,77 @@
+.taskbar {
+    height: 40px;
+    background: #34495e;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    gap: 5px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .taskbar.dark {
+    background: #2d2d2d;
+    border-top: 1px solid #404040;
+  }
+  
+  .taskbar-windows {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+  }
+  
+  .taskbar-window-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    min-width: 120px;
+    max-width: 200px;
+  }
+  
+  .taskbar-window-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  
+  .taskbar-window-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .taskbar.dark .taskbar-window-button {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+  }
+  
+  .taskbar-theme-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 10px;
+  }
+  
+  .taskbar-window-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .taskbar.dark .taskbar-window-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .taskbar-window-button.active {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }

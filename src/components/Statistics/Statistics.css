@@ -1,0 +1,131 @@
+.statistics {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    padding: 12px;
+  }
+  
+  .statistics.dark {
+    background: #2d2d2d;
+    color: #fff;
+  }
+  
+  .statistics-loading,
+  .statistics-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 16px;
+  }
+  
+  .statistics-error {
+    color: #e74c3c;
+  }
+  
+  .statistics-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 20px;
+  }
+  
+  .chart-container {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  
+  .stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+  }
+  
+  .dark .stats-summary {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .summary-item {
+    text-align: center;
+  }
+  
+  .summary-item h3 {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  
+  .dark .summary-item h3 {
+    color: #aaa;
+  }
+  
+  .summary-item p {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  
+  .stats-averages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+  
+  .averages-group {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  
+  .dark .averages-group {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .averages-group h3 {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  
+  .dark .averages-group h3 {
+    color: #aaa;
+  }
+  
+  .averages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+  }
+  
+  .average-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .average-item span {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 2px;
+  }
+  
+  .dark .average-item span {
+    color: #aaa;
+  }
+  
+  .average-item strong {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .dark .average-item strong {
+    color: #fff;
+  }
+  
