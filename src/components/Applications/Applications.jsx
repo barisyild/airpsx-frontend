@@ -9,6 +9,22 @@ const Applications = ({ isDarkMode }) => {
   const [error, setError] = useState(null);
   const [selectedApp, setSelectedApp] = useState(null);
   const [runStatus, setRunStatus] = useState(null);
+  const appTitleIdBlackList = [
+      "NPXS40032",
+      "NPXS40037",
+      "NPXS40047",
+      "NPXS40053",
+      "NPXS40054",
+      "NPXS40056",
+      "NPXS40063",
+      "NPXS40071",
+      "NPXS40139",
+      "NPXS40144",
+      "NPXS40145",
+      "NPXS40148",
+      "NPXS40149",
+      "NPXS40150"
+  ];
 
   useEffect(() => {
     const fetchApps = async () => {
@@ -16,7 +32,7 @@ const Applications = ({ isDarkMode }) => {
         const data = await ApiService.getAppList();
         // Sort by size and filter system apps
         const sortedApps = data
-          .filter((app) => app.size > 0)
+          .filter(app => !appTitleIdBlackList.includes(app.titleId))
           .sort((a, b) => b.size - a.size);
         setApps(sortedApps);
         setError(null);
@@ -79,9 +95,11 @@ const Applications = ({ isDarkMode }) => {
                   />
                 </div>
                 <div className="app-name">{app.titleName}</div>
-                <div className="app-size">
-                  {ApiService.formatBytes(app.size)}
-                </div>
+                {app.size != 0 && (
+                    <div className="app-size">
+                      {ApiService.formatBytes(app.size)}
+                    </div>
+                )}
               </div>
             ))}
           </div>
@@ -113,16 +131,20 @@ const Applications = ({ isDarkMode }) => {
                       <span>Title ID:</span>
                       <span>{selectedApp.titleId}</span>
                     </div>
-                    <div className="detail-row">
-                      <span>Size:</span>
-                      <span>{ApiService.formatBytes(selectedApp.size)}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span>Install Date:</span>
-                      <span>
+                    {selectedApp.size != 0 && (
+                        <div className="detail-row">
+                          <span>Size:</span>
+                          <span>{ApiService.formatBytes(selectedApp.size)}</span>
+                        </div>
+                    )}
+                    {selectedApp.installTime != null && (
+                        <div className="detail-row">
+                          <span>Install Date:</span>
+                          <span>
                         {new Date(selectedApp.installTime).toLocaleString()}
                       </span>
-                    </div>
+                        </div>
+                    )}
                     <div className="detail-actions">
                       <button
                         className={`run-button ${
