@@ -65,6 +65,7 @@ const IconService = {
         return "📋";
 
       // Executables
+      case "bin":
       case "elf":
       case "self":
       case "sprx":
