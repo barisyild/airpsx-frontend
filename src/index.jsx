@@ -2,6 +2,9 @@ import { render } from "preact";
 import { App } from "./app";
 import "./style.css";
 import CodeMirror from "codemirror";
+import ToastService from "./services/ToastService.jsx";
+
+ToastService.init();
 
 // Haxe modu tanımlaması
 CodeMirror.defineMode("haxe", function(config, parserConfig) {

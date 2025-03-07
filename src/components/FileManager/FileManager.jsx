@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import "./FileManager.css";
 import IconService from "../../services/IconService";
 import ApiService from "../../services/ApiService";
-import Toast from "../Toast/Toast";
+import ToastService from "../../services/ToastService.jsx";
 
 const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   // Let's put the path related states at the top
@@ -29,7 +29,6 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadError, setUploadError] = useState(null);
-  const [toasts, setToasts] = useState([]);
 
   // Ref definition
   const fileManagerRef = useRef(null);
@@ -492,26 +491,17 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
     }
   };
 
-  const addToast = (message, type = "info") => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-  };
-
-  const removeToast = (id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
-
   const handleExecutePayload = async (item) => {
     try {
       const response = await ApiService.executePayload(currentPath + item.name);
       if (response.success) {
-        addToast("Payload executed successfully", "success");
+        ToastService.success("Payload executed successfully");
       } else {
-        addToast(response.message || "Failed to execute payload", "error");
+        ToastService.error(response.message || "Failed to execute payload");
       }
     } catch (err) {
       console.error("Execute payload failed:", err);
-      addToast("Network error while executing payload", "error");
+      ToastService.error("Network error while executing payload");
     }
     setContextMenu({ ...contextMenu, show: false });
   };
@@ -692,16 +682,6 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
           )}
         </div>
       )}
-      <div className="toast-container">
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
     </div>
   );
 };
