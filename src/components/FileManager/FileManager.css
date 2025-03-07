@@ -578,3 +578,23 @@
     transition: width 0.2s;
   }
   
+  .context-menu-item.execute::before {
+    content: "⚡";
+  }
+  
+  .context-menu-item.execute {
+    color: #ff9800;
+  }
+  
+  .dark .context-menu-item.execute {
+    color: #ffa726;
+  }
+  
+  .context-menu-item.execute:hover {
+    background: rgba(255, 152, 0, 0.1);
+  }
+  
+  .dark .context-menu-item.execute:hover {
+    background: rgba(255, 167, 38, 0.1);
+  }
+  

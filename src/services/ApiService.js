@@ -283,5 +283,22 @@ class ApiService {
             xhr.send(formData);
         });
     }
+    static async executePayload(path) {
+        try {
+            const response = await fetch(`${API_URL}/api/fs/payload`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ path })
+            });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.error('Execute payload error:', error);
+            throw error;
+        }
+    }
 }
 export default ApiService;

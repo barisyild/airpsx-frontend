@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import "./FileManager.css";
 import IconService from "../../services/IconService";
 import ApiService from "../../services/ApiService";
+import Toast from "../Toast/Toast";
 
 const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   // Let's put the path related states at the top
@@ -28,6 +29,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadError, setUploadError] = useState(null);
+  const [toasts, setToasts] = useState([]);
 
   // Ref definition
   const fileManagerRef = useRef(null);
@@ -490,6 +492,30 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
     }
   };
 
+  const addToast = (message, type = "info") => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  const handleExecutePayload = async (item) => {
+    try {
+      const response = await ApiService.executePayload(currentPath + item.name);
+      if (response.success) {
+        addToast("Payload executed successfully", "success");
+      } else {
+        addToast(response.message || "Failed to execute payload", "error");
+      }
+    } catch (err) {
+      console.error("Execute payload failed:", err);
+      addToast("Network error while executing payload", "error");
+    }
+    setContextMenu({ ...contextMenu, show: false });
+  };
+
   return (
     <div
       ref={fileManagerRef}
@@ -644,6 +670,18 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
               >
                 Rename (Disabled)
               </div>
+              {(contextMenu.item.name.endsWith('.elf') || contextMenu.item.name.endsWith('.bin')) && (
+                <>
+                  <div className="context-menu-separator" />
+                  <div
+                    className="context-menu-item execute"
+                    onClick={() => handleExecutePayload(contextMenu.item)}
+                  >
+                    Execute Payload
+                  </div>
+                </>
+              )}
+              <div className="context-menu-separator" />
               <div
                 className="context-menu-item delete"
                 onClick={() => /** handleDelete(contextMenu.item) **/ null}
@@ -654,6 +692,16 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
           )}
         </div>
       )}
+      <div className="toast-container">
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
