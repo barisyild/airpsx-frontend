@@ -77,23 +77,7 @@ class ApiService {
     static async runApp(titleId) {
         try {
             const response = await fetch(`${API_URL}/api/app/run/${titleId}`);
-            const data = await response.json();
-            if (data.code >= 0) {
-                return {
-                    success: true,
-                    message: 'Application started successfully'
-                };
-            } else if (data.code === -2137784308) {
-                return {
-                    success: false,
-                    message: 'Application is already running'
-                };
-            } else {
-                return {
-                    success: false,
-                    message: 'Failed to start application'
-                };
-            }
+            return await response.json();
         } catch (error) {
             console.error('App run error:', error);
             throw error;
