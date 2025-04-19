@@ -506,6 +506,46 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
     setContextMenu({ ...contextMenu, show: false });
   };
 
+  const handleInstallPackage = async (item) => {
+    try {
+      // Get all selected items
+      const selectedFilePaths = Array.from(selectedItems)
+        .map(id => {
+          const selectedItem = items.find(item => item.id === id);
+          return selectedItem;
+        })
+        .filter(item => item && item.name.toLowerCase().endsWith('.pkg'))
+        .map(item => currentPath + item.name);
+
+      // If no PKG files are in the selection, just install the right-clicked item
+      if (selectedFilePaths.length === 0 && item.name.toLowerCase().endsWith('.pkg')) {
+        selectedFilePaths.push(currentPath + item.name);
+      }
+
+      if (selectedFilePaths.length === 0) {
+        ToastService.error("No PKG files selected for installation");
+        return;
+      }
+
+      // Install each PKG file in sequence
+      let installCount = 0;
+      for (const packagePath of selectedFilePaths) {
+        await ApiService.installPackageFromUrl(packagePath);
+        installCount++;
+      }
+
+      if (installCount === 1) {
+        ToastService.success("Package installation started");
+      } else {
+        ToastService.success(`Installation of ${installCount} packages started`);
+      }
+    } catch (err) {
+      console.error("Package installation failed:", err);
+      ToastService.error(err.message || "Failed to install package");
+    }
+    setContextMenu({ ...contextMenu, show: false });
+  };
+
   return (
     <div
       ref={fileManagerRef}
@@ -642,8 +682,30 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
             top: `${contextMenu.y}px`,
           }}
         >
+          {(contextMenu.item.name.toLowerCase().endsWith('.pkg')) && (
+              <>
+                <div
+                    className="context-menu-item install"
+                    onClick={() => handleInstallPackage(contextMenu.item)}
+                >
+                  Install Package
+                </div>
+                <div className="context-menu-separator" />
+              </>
+          )}
+          {(contextMenu.item.name.endsWith('.elf') || contextMenu.item.name.endsWith('.bin')) && (
+              <>
+                <div className="context-menu-separator" />
+                <div
+                    className="context-menu-item execute"
+                    onClick={() => handleExecutePayload(contextMenu.item)}
+                >
+                  Execute Payload
+                </div>
+              </>
+          )}
           {contextMenu.isBackground ? (
-            <div className="context-menu-item create-folder" onClick={/** createNewFolder **/ null}>
+            <div className="context-menu-item create-folder" onClick={createNewFolder}>
               Create Folder
             </div>
           ) : (
@@ -656,27 +718,16 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
               </div>
               <div
                 className="context-menu-item rename"
-                onClick={() => /** handleRename(contextMenu.item) **/ null}
+                onClick={() => handleRename(contextMenu.item)}
               >
-                Rename (Disabled)
+                Rename
               </div>
-              {(contextMenu.item.name.endsWith('.elf') || contextMenu.item.name.endsWith('.bin')) && (
-                <>
-                  <div className="context-menu-separator" />
-                  <div
-                    className="context-menu-item execute"
-                    onClick={() => handleExecutePayload(contextMenu.item)}
-                  >
-                    Execute Payload
-                  </div>
-                </>
-              )}
               <div className="context-menu-separator" />
               <div
                 className="context-menu-item delete"
-                onClick={() => /** handleDelete(contextMenu.item) **/ null}
+                onClick={() => handleDelete(contextMenu.item)}
               >
-                Delete (Disabled)
+                Delete
               </div> 
             </>
           )}

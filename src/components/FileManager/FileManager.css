@@ -137,6 +137,10 @@
     width: 16px;
     text-align: center;
   }
+
+  .context-menu-item.install::before {
+    content: "🍺";
+  }
   
   .context-menu-item.download::before {
     content: "⭳";

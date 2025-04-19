@@ -37,11 +37,26 @@ const Desktop = () => {
     clickCount: 0,
   });
   const [selectedIcons, setSelectedIcons] = useState(new Set());
-  const [showSystemDetails, setShowSystemDetails] = useState(false);
   const [selectedIconIndex, setSelectedIconIndex] = useState(-1);
+  const [showSystemDetails, setShowSystemDetails] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => {
     return document.cookie.includes('disclaimerAccepted=true');
   });
+  const [pkgUploadStatus, setPkgUploadStatus] = useState({
+    uploading: false,
+    progress: 0,
+    error: null,
+    success: false
+  });
+  const [showUrlModal, setShowUrlModal] = useState(false);
+  const [packageUrl, setPackageUrl] = useState('');
+  const [urlInstallStatus, setUrlInstallStatus] = useState({
+    loading: false,
+    error: null,
+    success: false
+  });
+  const dragTimeoutRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem("theme", isDarkMode ? "dark" : "light");
@@ -361,6 +376,111 @@ const Desktop = () => {
     setDisclaimerAccepted(true);
   };
 
+  // Function to handle PKG file uploads
+  const handlePkgFileUpload = (file) => {
+    if (file && file.name.toLowerCase().endsWith('.pkg')) {
+      setPkgUploadStatus({
+        uploading: true,
+        progress: 0,
+        error: null,
+        success: false
+      });
+      
+      ApiService.uploadPkg(file, (progress) => {
+        setPkgUploadStatus(prev => ({
+          ...prev,
+          progress
+        }));
+      })
+      .then(response => {
+        setPkgUploadStatus({
+          uploading: false,
+          progress: 100,
+          error: null,
+          success: true
+        });
+        
+        setTimeout(() => {
+          setPkgUploadStatus({
+            uploading: false,
+            progress: 0,
+            error: null,
+            success: false
+          });
+        }, 3000);
+      })
+      .catch(error => {
+        setPkgUploadStatus({
+          uploading: false,
+          progress: 0,
+          error: error.message || 'An error occurred during installation\n',
+          success: false
+        });
+      });
+    } else {
+      setPkgUploadStatus({
+        uploading: false,
+        progress: 0,
+        error: 'Please select a valid .pkg file',
+        success: false
+      });
+    }
+  };
+
+  // Handle package installation from URL
+  const handleUrlInstall = async () => {
+    if (!packageUrl.trim()) {
+      setUrlInstallStatus({
+        loading: false,
+        error: 'Please enter a valid URL',
+        success: false
+      });
+      return;
+    }
+
+    setUrlInstallStatus({
+      loading: true,
+      error: null,
+      success: false
+    });
+
+    try {
+      await ApiService.installPackageFromUrl(packageUrl);
+      setUrlInstallStatus({
+        loading: false,
+        error: null,
+        success: true
+      });
+      
+      // Reset form after successful installation
+      setTimeout(() => {
+        setShowUrlModal(false);
+        setPackageUrl('');
+        setUrlInstallStatus({
+          loading: false,
+          error: null,
+          success: false
+        });
+      }, 2000);
+    } catch (error) {
+      setUrlInstallStatus({
+        loading: false,
+        error: error.message || 'Failed to install package from URL',
+        success: false
+      });
+    }
+  };
+
+  // Handle file input change
+  const handleFileInputChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handlePkgFileUpload(file);
+    }
+    // Reset file input so the same file can be selected again
+    e.target.value = '';
+  };
+
   return (
     <div
       className={`desktop ${isDarkMode ? "dark" : ""}`}
@@ -441,12 +561,85 @@ const Desktop = () => {
             ))
           )}
 
-          <div className="storage-dropzone">
+          <div className="storage-dropzone" 
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.currentTarget.classList.add('drag-over');
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.currentTarget.classList.remove('drag-over');
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.currentTarget.classList.remove('drag-over');
+              
+              const files = Array.from(e.dataTransfer.files);
+              const pkgFile = files.find(file => file.name.toLowerCase().endsWith('.pkg'));
+              
+              if (pkgFile) {
+                handlePkgFileUpload(pkgFile);
+              } else {
+                setPkgUploadStatus({
+                  uploading: false,
+                  progress: 0,
+                  error: 'Please drag a valid .pkg file',
+                  success: false
+                });
+              }
+            }}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              style={{ display: 'none' }} 
+              accept=".pkg"
+              onChange={handleFileInputChange}
+            />
             <div className="dropzone-content">
-              <div className="dropzone-icon">🚧</div>
-              <div className="dropzone-text">
-                PKG Installer - Work in Progress
-              </div>
+              {pkgUploadStatus.uploading ? (
+                <div className="pkg-upload-progress">
+                  <div className="progress-bar-container">
+                    <div 
+                      className="progress-bar-fill" 
+                      style={{ width: `${pkgUploadStatus.progress}%` }}
+                    ></div>
+                  </div>
+                  <div className="progress-text">
+                    Uploading: %{pkgUploadStatus.progress.toFixed(1)}
+                  </div>
+                </div>
+              ) : pkgUploadStatus.error ? (
+                <div className="pkg-upload-error">
+                  <div className="dropzone-icon">❌</div>
+                  <div className="dropzone-text">{pkgUploadStatus.error}</div>
+                </div>
+              ) : pkgUploadStatus.success ? (
+                <div className="pkg-upload-success">
+                  <div className="dropzone-icon">✅</div>
+                  <div className="dropzone-text">PKG file successfully uploaded!</div>
+                </div>
+              ) : (
+                <>
+                  <div className="dropzone-icon">📦</div>
+                  <div className="dropzone-text">
+                    PKG Installer - Drag PKG file here
+                  </div>
+                  <button 
+                    className="url-install-button"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering the file input click
+                      setShowUrlModal(true);
+                    }}
+                  >
+                    Install from URL
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -525,6 +718,44 @@ const Desktop = () => {
         }}
         onThemeToggle={() => setIsDarkMode(!isDarkMode)}
       />
+      
+      {/* URL Install Modal */}
+      {showUrlModal && (
+        <div className={`url-modal-overlay ${isDarkMode ? "dark" : ""}`} onClick={() => setShowUrlModal(false)}>
+          <div className={`url-modal ${isDarkMode ? "dark" : ""}`} onClick={(e) => e.stopPropagation()}>
+            <div className="url-modal-header">
+              <h3>Install Package from URL</h3>
+              <button className="close-button" onClick={() => setShowUrlModal(false)}>×</button>
+            </div>
+            <div className="url-modal-content">
+              <input
+                type="text"
+                className="url-input"
+                placeholder="Enter package URL (e.g., http://example.com/game.pkg)"
+                value={packageUrl}
+                style={{width: "94%"}}
+                onChange={(e) => setPackageUrl(e.target.value)}
+                disabled={urlInstallStatus.loading}
+              />
+              {urlInstallStatus.error && (
+                <div className="url-error-message">{urlInstallStatus.error}</div>
+              )}
+              {urlInstallStatus.success && (
+                <div className="url-success-message">Package installation started successfully!</div>
+              )}
+            </div>
+            <div className="url-modal-footer">
+              <button 
+                className="install-url-button"
+                onClick={handleUrlInstall}
+                disabled={urlInstallStatus.loading}
+              >
+                {urlInstallStatus.loading ? 'Installing...' : 'Install'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

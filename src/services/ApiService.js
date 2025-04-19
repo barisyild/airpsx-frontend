@@ -300,6 +300,93 @@ class ApiService {
             throw error;
         }
     }
+
+    static async uploadPkg(file, onProgress) {
+        return new Promise((resolve, reject) => {
+
+            const length = 65536;
+            if (file.size < length) {
+                console.error("The file is not big enough.");
+                return;
+            }
+
+            const blob = file.slice(0, length);
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const buffer = new DataView(e.target.result);
+
+                const magic = buffer.getUint32(0x00, false);
+                let packageOffset = 0n;
+                const blobs = [];
+
+                // PS5 PKG
+                if(magic === 0x7F464948)
+                {
+                    packageOffset = parseInt(buffer.getBigInt64(0x58, true));
+                    blobs.push(file.slice(packageOffset, file.size), file.slice(0, packageOffset));
+                }
+                // PS4 PKG
+                else if (magic === 0x7F434E54)
+                {
+                    blobs.push(file);
+                }else{
+                    console.error("Dosya yeterince büyük değil.");
+                    return;
+                }
+
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData();
+                formData.append('file', new Blob(blobs, { type: file.type }));
+
+                xhr.open('POST', `${API_URL}/api/package/upload?size=${file.size}&offset=${packageOffset}`, true);
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable && onProgress) {
+                        const percentComplete = (event.loaded / event.total) * 100;
+                        onProgress(percentComplete);
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(JSON.parse(xhr.responseText));
+                    } else {
+                        reject(new Error('Network response was not ok'));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error'));
+
+                xhr.send(formData);
+            };
+
+            reader.readAsArrayBuffer(blob);
+        });
+    }
+
+    static async installPackageFromUrl(url) {
+        try {
+            const response = await fetch(`${API_URL}/api/package/install`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ path: url })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Network response was not ok');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Package install error:', error);
+            throw error;
+        }
+    }
+    
     // Media Gallery API Methods
     static async getMediaList() {
         try {
