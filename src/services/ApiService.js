@@ -300,5 +300,32 @@ class ApiService {
             throw error;
         }
     }
+    // Media Gallery API Methods
+    static async getMediaList() {
+        try {
+            const response = await fetch(`${API_URL}/api/media/list`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.error('Media list error:', error);
+            throw error;
+        }
+    }
+    
+    static getMediaUrl(filePath) {
+        const encodedPath = encodeURIComponent(filePath);
+        return `${API_URL}/api/media/${encodedPath}`;
+    }
+    
+    static getMediaThumbnailUrl(filePath) {
+        const encodedPath = encodeURIComponent(filePath);
+        return `${API_URL}/api/media/thumbnails/${encodedPath}`;
+    }
+    
+    static isVideo(filePath) {
+        return filePath.toLowerCase().endsWith('.mp4') || 
+               filePath.toLowerCase().endsWith('.webm') || 
+               filePath.toLowerCase().endsWith('.mov');
+    }
 }
 export default ApiService;

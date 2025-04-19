@@ -1,5 +1,6 @@
 import Applications from "../components/Applications/Applications";
 import FileManager from "../components/FileManager/FileManager";
+import MediaGallery from "../components/MediaGallery/MediaGallery";
 import ProcessList from "../components/ProcessList/ProcessList";
 import Profiles from "../components/Profiles/Profiles";
 import Scheduler from "../components/Scheduler/Scheduler";
@@ -88,6 +89,16 @@ class WindowConfig {
       minWidth: 500,
       minHeight: 400,
       component: Scheduler
+    },
+    mediaGallery: {
+      id: 'mediaGallery',
+      title: 'Media Gallery',
+      icon: '🖼️',
+      defaultWidth: 900,
+      defaultHeight: 700,
+      minWidth: 400,
+      minHeight: 300,
+      component: MediaGallery
     }
   };
 
