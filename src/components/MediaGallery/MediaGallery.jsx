@@ -27,6 +27,7 @@ const MediaGallery = ({ isDarkMode }) => {
       const data = await ApiService.getMediaList();
       const entries = data.entries.map(entry => {
         const isVideo = entry.filePath.toLowerCase().endsWith('.mp4');
+        const isJxr = isJxrFormat(entry.filePath);
         const hasTrophy = entry.ext && entry.ext.trophy;
         const titleId = entry.meta && entry.meta.appVerTitleId;
         
@@ -42,6 +43,7 @@ const MediaGallery = ({ isDarkMode }) => {
         return {
           ...entry,
           isVideo,
+          isJxr,
           hasTrophy,
           titleId,
           duration,
@@ -60,6 +62,13 @@ const MediaGallery = ({ isDarkMode }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to check if an image is in JXR format
+  const isJxrFormat = (filePath) => {
+    if (!filePath) return false;
+    const path = filePath.toLowerCase();
+    return path.endsWith('.jxr') || path.endsWith('.wdp') || path.endsWith('.hdp');
   };
 
   const downloadMedia = (mediaItem) => {
@@ -211,11 +220,20 @@ const MediaGallery = ({ isDarkMode }) => {
               <div key={index} className="media-item" onClick={() => openViewer(item)}>
                 <div className="media-thumbnail">
                   {item.isVideo && <div className="video-indicator">▶</div>}
-                  <img
-                    src={ApiService.getMediaThumbnailUrl(item.filePath)}
-                    alt="Media thumbnail"
-                    loading="lazy"
-                  />
+                  {item.isJxr ? (
+                    <div className="jxr-thumbnail">
+                      <div className="jxr-thumbnail-content">
+                        <div className="jxr-thumbnail-icon">HDR</div>
+                        <div className="jxr-thumbnail-text">HDR Content</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={ApiService.getMediaThumbnailUrl(item.filePath)}
+                      alt="Media thumbnail"
+                      loading="lazy"
+                    />
+                  )}
                   {item.hasTrophy && (
                     <div className="trophy-badge" title="Trophy Earned">
                       🏆
@@ -252,6 +270,9 @@ const MediaGallery = ({ isDarkMode }) => {
                 {selectedMedia.hasTrophy && (
                   <span className="viewer-trophy">🏆</span>
                 )}
+                {selectedMedia.isJxr && (
+                  <span className="viewer-hdr">HDR</span>
+                )}
               </div>
               <div className="viewer-actions">
                 <button
@@ -273,6 +294,13 @@ const MediaGallery = ({ isDarkMode }) => {
                   controls
                   autoPlay
                 />
+              ) : selectedMedia.isJxr ? (
+                <div className="hdr-content-container">
+                  <div className="hdr-content-message">
+                    <div className="hdr-icon">HDR</div>
+                    <div className="hdr-text">HDR Content cannot be previewed.</div>
+                  </div>
+                </div>
               ) : (
                 <img
                   src={ApiService.getMediaUrl(selectedMedia.filePath)}
