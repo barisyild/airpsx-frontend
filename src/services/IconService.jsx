@@ -34,6 +34,7 @@ const IconService = {
         return "🖼️";
 
       // Media
+      case "flac":
       case "mp3":
       case "wav":
       case "ogg":
