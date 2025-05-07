@@ -8,8 +8,8 @@
   
   .file-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 100px);
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, 120px);
+    gap: 10px;
     padding: 10px;
     padding-right: 20px;
     justify-content: start;
@@ -20,20 +20,20 @@
   }
   
   .file-item {
-    width: 100px;
-    min-height: 90px;
+    width: 120px;
+    height: 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
-    padding: 10px;
+    padding: 5px;
     border-radius: 4px;
     text-align: center;
     border: 1px solid transparent;
     box-sizing: border-box;
     transition: background-color 0.2s ease;
     position: relative;
-    overflow: hidden;
   }
   
   .file-item::after {
@@ -58,20 +58,22 @@
   
   .file-icon {
     font-size: 32px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
   }
   
   .file-name {
     font-size: 12px;
-    word-break: break-word;
-    max-width: 100%;
+    width: 100%;
     text-align: center;
-    text-overflow: ellipsis;
+    word-break: break-word;
+    display: block;
     overflow: hidden;
+    text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
-    min-height: 36px; /* Allocates space for approximately 3 lines of text */
+    line-height: 1.2;
   }
   
   .context-menu {
