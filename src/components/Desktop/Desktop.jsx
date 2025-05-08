@@ -513,7 +513,7 @@ const Desktop = () => {
               onClick={(e) => handleDesktopItemClick(e, item)}
               tabIndex={0}
             >
-              <div className="desktop-item-icon">
+              <div className="desktop-item-icon icon">
                 {item.icon}
               </div>
               <div className="desktop-item-name">{item.name}</div>
@@ -524,7 +524,7 @@ const Desktop = () => {
           <div className="storage-header">
             Storage
             <button
-              className="refresh-button"
+              className="refresh-button icon"
               onClick={fetchStorage}
               disabled={isStorageLoading}
             >
@@ -539,7 +539,7 @@ const Desktop = () => {
           ) : (
             storage.map((drive, index) => (
               <div key={drive.path} className="storage-item">
-                <div className="storage-icon">{getStorageIcon(drive.name)}</div>
+                <div className="storage-icon icon">{getStorageIcon(drive.name)}</div>
                 <div className="storage-info">
                   <div className="storage-name">{drive.name}</div>
                   <div className="storage-usage">
@@ -615,17 +615,17 @@ const Desktop = () => {
                 </div>
               ) : pkgUploadStatus.error ? (
                 <div className="pkg-upload-error">
-                  <div className="dropzone-icon">❌</div>
+                  <div className="dropzone-icon icon">❌</div>
                   <div className="dropzone-text">{pkgUploadStatus.error}</div>
                 </div>
               ) : pkgUploadStatus.success ? (
                 <div className="pkg-upload-success">
-                  <div className="dropzone-icon">✅</div>
+                  <div className="dropzone-icon icon">✅</div>
                   <div className="dropzone-text">PKG file successfully uploaded!</div>
                 </div>
               ) : (
                 <>
-                  <div className="dropzone-icon">📦</div>
+                  <div className="dropzone-icon icon">📦</div>
                   <div className="dropzone-text">
                     PKG Installer - Drag PKG file here
                   </div>

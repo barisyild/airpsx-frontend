@@ -202,7 +202,7 @@ const MediaGallery = ({ isDarkMode }) => {
           </select>
         </div>
 
-        <button className="refresh-button" onClick={loadMedia} disabled={loading}>
+        <button className="refresh-button icon" onClick={loadMedia} disabled={loading}>
           🔄
         </button>
       </div>
@@ -235,7 +235,7 @@ const MediaGallery = ({ isDarkMode }) => {
                     />
                   )}
                   {item.hasTrophy && (
-                    <div className="trophy-badge" title="Trophy Earned">
+                    <div className="trophy-badge icon" title="Trophy Earned">
                       🏆
                     </div>
                   )}
@@ -276,7 +276,7 @@ const MediaGallery = ({ isDarkMode }) => {
               </div>
               <div className="viewer-actions">
                 <button
-                  className="download-button"
+                  className="download-button icon"
                   onClick={() => downloadMedia(selectedMedia)}
                   title="Download"
                 >

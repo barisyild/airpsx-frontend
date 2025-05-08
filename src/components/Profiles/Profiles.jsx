@@ -117,7 +117,7 @@ const Profiles = ({ isDarkMode }) => {
                     </div>
                     <div className="detail-actions">
                       <button
-                        className="backup-button"
+                        className="backup-button icon"
                         onClick={() => handleBackup(selectedProfile.profileId)}
                       >
                         Backup Save Files

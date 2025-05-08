@@ -22,14 +22,14 @@ const TaskBar = ({
             onClick={() => onWindowClick(window.id, activeWindow === window.id)}
           >
             {" "}
-            <span className="taskbar-window-icon">
+            <span className="taskbar-window-icon icon">
               {window.icon}
             </span>{" "}
             <span className="taskbar-window-title">{window.title}</span>{" "}
           </button>
         ))}{" "}
       </div>{" "}
-      <button className="taskbar-theme-toggle" onClick={onThemeToggle}>
+      <button className="taskbar-theme-toggle icon" onClick={onThemeToggle}>
         {" "}
         {isDarkMode ? "☀️" : "🌙"}{" "}
       </button>{" "}

@@ -375,7 +375,7 @@ const Scheduler = ({ isDarkMode }) => {
           <h2>Tasks</h2>
           <div className="task-list-actions">
             <button 
-              className="create-task"
+              className="create-task icon"
               onClick={handleCreateTask}
               title="Create New Task"
             >
@@ -383,7 +383,7 @@ const Scheduler = ({ isDarkMode }) => {
             </button>
             <button 
               onClick={fetchTasks} 
-              className="refresh-button"
+              className="refresh-button icon"
               title="Refresh Tasks"
             >
               🔄

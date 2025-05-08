@@ -215,7 +215,7 @@ const Window = ({
     >
       <div className="window-header" onMouseDown={handleMouseDown}>
         <div className="window-title">
-          <span className="window-icon">
+          <span className="window-icon icon">
             {window.icon}
           </span>
           <span className="window-title-text">{window.title}</span>

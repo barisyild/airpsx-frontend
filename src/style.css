@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'OpenMoji Font';
+    src: url('./assets/OpenMoji-color-glyf_colr_0.ttf') format('truetype');
+}
+
+.ps4 .icon,
+.ps5 .icon {
+    font-family: "OpenMoji Font";
+}

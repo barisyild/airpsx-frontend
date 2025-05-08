@@ -699,7 +699,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
                 }
               }}
             >
-              <div className="file-icon">
+              <div className="file-icon icon">
                 {isImageFile(item.name) ? (
                   <div className="image-thumbnail">
                     {loadingImages.has(item.id) && (
