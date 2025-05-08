@@ -4,6 +4,8 @@
     padding: 10px;
     user-select: none;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
   
   .file-grid {
@@ -15,6 +17,7 @@
     justify-content: start;
     align-content: start;
     height: 100%;
+    flex: 1;
     overflow-y: auto;
     box-sizing: border-box;
   }
@@ -212,6 +215,8 @@
   .file-manager-content {
     display: flex;
     height: 100%;
+    flex: 1;
+    overflow: hidden;
   }
   
   .file-grid {
@@ -348,6 +353,7 @@
   .file-grid::-webkit-scrollbar {
     width: 8px;
     height: 8px;
+    opacity: 1;
   }
   
   .file-grid::-webkit-scrollbar-track {
@@ -386,11 +392,11 @@
   
   /* Hover effect for scrollbar visibility */
   .file-grid {
-    overflow-y: overlay; /* For Overlay scrollbar */
+    overflow-y: auto; /* Changed from overlay to auto for better compatibility */
   }
   
   .file-grid::-webkit-scrollbar {
-    opacity: 0;
+    opacity: 1;
     transition: opacity 0.3s;
   }
   
