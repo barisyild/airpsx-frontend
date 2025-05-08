@@ -32,6 +32,9 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   // Video player states
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
+  // Image viewer states
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(null);
 
   // Ref definition
   const fileManagerRef = useRef(null);
@@ -339,6 +342,8 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
       const isMediaFile = isAudioVideoFile(item.name);
       if (isMediaFile) {
         openMediaPlayer(item);
+      } else if (isImageFile(item.name)) {
+        openImageViewer(item);
       } else {
         console.log("Open File:", item.name);
       }
@@ -361,6 +366,14 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
     return videoExtensions.some(ext => lowerCaseFileName.endsWith(ext));
   };
 
+  // Resim dosyası mı kontrol eder
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
+    const lowerCaseFileName = fileName.toLowerCase();
+    return imageExtensions.some(ext => lowerCaseFileName.endsWith(ext));
+  };
+
   const isAudioVideoFile = (fileName) => {
     return isAudioFile(fileName) || isVideoFile(fileName);
   };
@@ -370,9 +383,19 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
     setVideoPlayerOpen(true);
   };
 
+  const openImageViewer = (item) => {
+    setCurrentImage(item);
+    setImageViewerOpen(true);
+  };
+
   const closeMediaPlayer = () => {
     setVideoPlayerOpen(false);
     setCurrentVideo(null);
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerOpen(false);
+    setCurrentImage(null);
   };
 
   const downloadMedia = () => {
@@ -667,7 +690,17 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
               }}
             >
               <div className="file-icon">
-                {IconService.getFileIcon(item.type, item.name)}
+                {isImageFile(item.name) ? (
+                  <div className="image-thumbnail">
+                    <img 
+                      src={ApiService.getStreamUrl(currentPath + item.name)} 
+                      alt={item.name}
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  IconService.getFileIcon(item.type, item.name)
+                )}
               </div>
               {isRenaming && renamingItemId === item.id ? (
                 <input
@@ -829,6 +862,32 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
                   autoPlay
                 />
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {imageViewerOpen && currentImage && (
+        <div className="image-viewer-overlay" onClick={closeImageViewer}>
+          <div className="image-viewer-container" onClick={(e) => e.stopPropagation()}>
+            <div className="image-viewer-header">
+              <div className="image-title">{currentImage.name}</div>
+              <div className="image-controls">
+                <button className="download-button" onClick={() => handleDownload(currentImage)} title="Download">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+                <button className="close-button" onClick={closeImageViewer}>✖</button>
+              </div>
+            </div>
+            <div className="image-viewer-content">
+              <img 
+                src={ApiService.getStreamUrl(currentPath + currentImage.name)} 
+                alt={currentImage.name}
+                className="image-viewer-img"
+              />
             </div>
           </div>
         </div>

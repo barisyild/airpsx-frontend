@@ -830,3 +830,126 @@
       box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
     }
   }
+
+  /* Image thumbnail styles */
+  .image-thumbnail {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .image-thumbnail {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .image-thumbnail img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  
+  /* Image viewer overlay */
+  .image-viewer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .image-viewer-container {
+    background: #fff;
+    border-radius: 8px;
+    width: 90%;
+    height: 90%;
+    max-width: 1200px;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .dark .image-viewer-container {
+    background: #2d2d2d;
+  }
+  
+  .image-viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .dark .image-viewer-header {
+    border-bottom: 1px solid #444;
+  }
+  
+  .image-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .dark .image-title {
+    color: #e0e0e0;
+  }
+  
+  .image-controls {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .image-controls button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+  }
+  
+  .dark .image-controls button {
+    color: #aaa;
+  }
+  
+  .image-controls button:hover {
+    background: #f5f5f5;
+    color: #2196f3;
+  }
+  
+  .dark .image-controls button:hover {
+    background: #404040;
+    color: #64b5f6;
+  }
+  
+  .image-viewer-content {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .image-viewer-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
