@@ -35,6 +35,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   // Image viewer states
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
+  const [loadingImages, setLoadingImages] = useState(new Set());
 
   // Ref definition
   const fileManagerRef = useRef(null);
@@ -58,6 +59,15 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   useEffect(() => {
     loadFiles(currentPath);
   }, [currentPath]);
+
+  useEffect(() => {
+    // Add all image items to loading state initially
+    const imageItemIds = items
+      .filter(item => isImageFile(item.name))
+      .map(item => item.id);
+    
+    setLoadingImages(new Set(imageItemIds));
+  }, [items]);
 
   const handlePathChange = (e) => {
     setCurrentPath(e.target.value);
@@ -692,10 +702,30 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
               <div className="file-icon">
                 {isImageFile(item.name) ? (
                   <div className="image-thumbnail">
+                    {loadingImages.has(item.id) && (
+                      <div className="image-loading-spinner">
+                        <div className="spinner"></div>
+                      </div>
+                    )}
                     <img 
                       src={ApiService.getStreamUrl(currentPath + item.name)} 
                       alt={item.name}
                       loading="lazy"
+                      onLoad={() => {
+                        setLoadingImages(prev => {
+                          const newSet = new Set(prev);
+                          newSet.delete(item.id);
+                          return newSet;
+                        });
+                      }}
+                      style={{ opacity: loadingImages.has(item.id) ? 0 : 1 }}
+                      onError={() => {
+                        setLoadingImages(prev => {
+                          const newSet = new Set(prev);
+                          newSet.delete(item.id);
+                          return newSet;
+                        });
+                      }}
                     />
                   </div>
                 ) : (
@@ -883,11 +913,26 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
               </div>
             </div>
             <div className="image-viewer-content">
-              <img 
-                src={ApiService.getStreamUrl(currentPath + currentImage.name)} 
-                alt={currentImage.name}
-                className="image-viewer-img"
-              />
+              {currentImage && (
+                <>
+                  {imageViewerOpen && (
+                    <div className="image-loading-spinner large">
+                      <div className="spinner"></div>
+                    </div>
+                  )}
+                  <img 
+                    src={ApiService.getStreamUrl(currentPath + currentImage.name)} 
+                    alt={currentImage.name}
+                    className="image-viewer-img"
+                    onLoad={(e) => {
+                      // Hide spinner when image is loaded
+                      const parent = e.target.parentNode;
+                      const spinner = parent.querySelector('.image-loading-spinner');
+                      if (spinner) spinner.style.display = 'none';
+                    }}
+                  />
+                </>
+              )}
             </div>
           </div>
         </div>
