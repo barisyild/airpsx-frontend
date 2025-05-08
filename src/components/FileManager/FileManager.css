@@ -846,7 +846,6 @@
     justify-content: center;
     overflow: hidden;
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.1);
   }
   
   .dark .image-thumbnail {
@@ -970,11 +969,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.05);
-  }
-  
-  .dark .image-loading-spinner {
-    background: rgba(255, 255, 255, 0.05);
   }
   
   .image-loading-spinner.large {

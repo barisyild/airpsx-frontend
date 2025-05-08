@@ -1,6 +1,8 @@
 import Applications from "../components/Applications/Applications";
 import FileManager from "../components/FileManager/FileManager";
 import MediaGallery from "../components/MediaGallery/MediaGallery";
+import MediaPlayer from "../components/MediaPlayer/MediaPlayer";
+import ImageViewer from "../components/ImageViewer/ImageViewer";
 import ProcessList from "../components/ProcessList/ProcessList";
 import Profiles from "../components/Profiles/Profiles";
 import Scheduler from "../components/Scheduler/Scheduler";
@@ -99,6 +101,28 @@ class WindowConfig {
       minWidth: 400,
       minHeight: 300,
       component: MediaGallery
+    },
+    mediaPlayer: {
+      id: 'mediaPlayer',
+      title: 'Media Player',
+      icon: '🎬',
+      defaultWidth: 800,
+      defaultHeight: 500,
+      minWidth: 400,
+      minHeight: 300,
+      visible: false,
+      component: MediaPlayer
+    },
+    imageViewer: {
+      id: 'imageViewer',
+      title: 'Image Viewer',
+      icon: '🖼️',
+      defaultWidth: 800,
+      defaultHeight: 600,
+      minWidth: 400,
+      minHeight: 300,
+      visible: false,
+      component: ImageViewer
     }
   };
 
@@ -108,7 +132,7 @@ class WindowConfig {
 
   static getDesktopItems() {
     return [
-      ...Object.values(this.windows).map((config, index) => ({
+      ...Object.values(this.windows).filter(config => config.visible !== false).map((config, index) => ({
         id: index + 1,
         name: config.title,
         type: config.id,

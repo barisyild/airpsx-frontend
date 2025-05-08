@@ -107,13 +107,29 @@ const Desktop = () => {
     };
   };
 
-  const openWindow = (app) => {
+  const openWindow = (app, customProps = {}, customTitle = null) => {
     const config = WindowConfig.getConfig(app);
     if (!config) return;
 
-    // If the same type of window is already open
-    if (windows.some((w) => w.app === app)) {
-      const existingWindow = windows.find((w) => w.app === app);
+    // If we received a custom window id, check for existing window with that id
+    if (customProps.windowId && windows.some((w) => w.id === customProps.windowId)) {
+      const existingWindow = windows.find((w) => w.id === customProps.windowId);
+      if (existingWindow.minimized) {
+        setWindows(
+          windows.map((w) =>
+            w.id === existingWindow.id
+              ? { ...w, minimized: false }
+              : w
+          )
+        );
+      }
+      setActiveWindow(existingWindow.id);
+      return;
+    }
+
+    // If we don't have a custom window ID but the same type of window is already open
+    if (!customProps.windowId && windows.some((w) => w.app === app && !w.customInstance)) {
+      const existingWindow = windows.find((w) => w.app === app && !w.customInstance);
       if (existingWindow.minimized) {
         setWindows(
           windows.map((w) =>
@@ -131,10 +147,13 @@ const Desktop = () => {
     const rect = desktopContent?.getBoundingClientRect();
 
     if (rect) {
+      // Use customProps.windowId if provided, otherwise generate a new id
+      const windowId = customProps.windowId || Date.now();
+      
       const newWindow = {
-        id: Date.now(),
+        id: windowId,
         app: app,
-        title: config.title,
+        title: customTitle || config.title,
         icon: config.icon,
         position: {
           x: 50 + (windows.length * 20),
@@ -148,11 +167,14 @@ const Desktop = () => {
           width: config.minWidth,
           height: config.minHeight
         },
-        minimized: false
+        minimized: false,
+        props: customProps,
+        customInstance: !!customTitle // Mark if this is a custom instance
       };
 
       setWindows([...windows, newWindow]);
       setActiveWindow(newWindow.id);
+      return windowId;
     }
   };
 
@@ -649,20 +671,35 @@ const Desktop = () => {
           showPanel={showSystemDetails}
           onClose={() => setShowSystemDetails(false)}
         />
-        {windows.map((window) => {
-          const Component = WindowConfig.getComponent(window.app);
+        {windows.map((win) => {
+          const Component = WindowConfig.getComponent(win.app);
           return (
             <Window
-              key={window.id}
-              window={window}
-              isActive={activeWindow === window.id}
+              key={win.id}
+              window={win}
+              isActive={activeWindow === win.id}
               isDarkMode={isDarkMode}
-              onClose={() => closeWindow(window.id)}
-              onFocus={() => setActiveWindow(window.id)}
+              onClose={() => closeWindow(win.id)}
+              onFocus={() => setActiveWindow(win.id)}
               onDragStart={handleDragStart}
-              onMinimize={() => minimizeWindow(window.id)}
+              onMinimize={() => minimizeWindow(win.id)}
             >
-              {Component && <Component isDarkMode={isDarkMode} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
+              {Component && (
+                <Component
+                  contextMenu={contextMenu}
+                  setContextMenu={setContextMenu}
+                  isDarkMode={isDarkMode}
+                  storage={storage}
+                  isStorageLoading={isStorageLoading}
+                  storageError={storageError}
+                  language={language}
+                  onOpenWindow={(options) => {
+                    // options: { app, title, props }
+                    openWindow(options.app, options.props, options.title);
+                  }}
+                  {...win.props}
+                />
+              )}
             </Window>
           );
         })}
