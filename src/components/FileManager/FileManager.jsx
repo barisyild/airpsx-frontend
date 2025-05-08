@@ -29,6 +29,9 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
   const [renamingItemId, setRenamingItemId] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadError, setUploadError] = useState(null);
+  // Video player states
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+  const [currentVideo, setCurrentVideo] = useState(null);
 
   // Ref definition
   const fileManagerRef = useRef(null);
@@ -332,7 +335,50 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
       const newPath = currentPath + item.name + '/';
       navigateToPath(newPath);
     } else {
-      console.log("Open File:", item.name);
+      // Check if this is a video or audio file
+      const isMediaFile = isAudioVideoFile(item.name);
+      if (isMediaFile) {
+        openMediaPlayer(item);
+      } else {
+        console.log("Open File:", item.name);
+      }
+    }
+  };
+
+  // Ses dosyası mı kontrol eder
+  const isAudioFile = (fileName) => {
+    if (!fileName) return false;
+    const audioExtensions = ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'];
+    const lowerCaseFileName = fileName.toLowerCase();
+    return audioExtensions.some(ext => lowerCaseFileName.endsWith(ext));
+  };
+
+  // Video dosyası mı kontrol eder
+  const isVideoFile = (fileName) => {
+    if (!fileName) return false;
+    const videoExtensions = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v'];
+    const lowerCaseFileName = fileName.toLowerCase();
+    return videoExtensions.some(ext => lowerCaseFileName.endsWith(ext));
+  };
+
+  const isAudioVideoFile = (fileName) => {
+    return isAudioFile(fileName) || isVideoFile(fileName);
+  };
+
+  const openMediaPlayer = (item) => {
+    setCurrentVideo(item);
+    setVideoPlayerOpen(true);
+  };
+
+  const closeMediaPlayer = () => {
+    setVideoPlayerOpen(false);
+    setCurrentVideo(null);
+  };
+
+  const downloadMedia = () => {
+    if (currentVideo) {
+      const filePath = currentPath + currentVideo.name;
+      ApiService.downloadFiles([filePath]);
     }
   };
 
@@ -731,6 +777,60 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true }) => {
               </div> 
             </>
           )}
+        </div>
+      )}
+      {videoPlayerOpen && currentVideo && (
+        <div className="video-player-overlay" onClick={closeMediaPlayer}>
+          <div className="video-player-container" onClick={(e) => e.stopPropagation()}>
+            <div className="video-player-header">
+              <div className="video-title">{currentVideo.name}</div>
+              <div className="video-controls">
+                <button className="download-button" onClick={downloadMedia} title="Download">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+                <button className="close-button" onClick={closeMediaPlayer}>✖</button>
+              </div>
+            </div>
+            <div className="video-player-content">
+              {isAudioFile(currentVideo.name) ? (
+                <div className="audio-player-wrapper">
+                  <div className="audio-visualization">
+                    <div className="audio-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <line x1="12" y1="2" x2="12" y2="4"></line>
+                        <line x1="12" y1="20" x2="12" y2="22"></line>
+                        <line x1="4" y1="12" x2="2" y2="12"></line>
+                        <line x1="22" y1="12" x2="20" y2="12"></line>
+                        <line x1="6.34" y1="6.34" x2="4.93" y2="4.93"></line>
+                        <line x1="19.07" y1="4.93" x2="17.66" y2="6.34"></line>
+                        <line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>
+                        <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>
+                      </svg>
+                    </div>
+                    <div className="audio-title-large">{currentVideo.name}</div>
+                  </div>
+                  <audio 
+                    src={ApiService.getStreamUrl(currentPath + currentVideo.name)} 
+                    controls 
+                    autoPlay
+                    className="audio-player-element"
+                  />
+                </div>
+              ) : (
+                <video 
+                  src={ApiService.getStreamUrl(currentPath + currentVideo.name)} 
+                  controls 
+                  autoPlay
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

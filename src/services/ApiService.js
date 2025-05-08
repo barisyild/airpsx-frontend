@@ -414,5 +414,10 @@ class ApiService {
                filePath.toLowerCase().endsWith('.webm') || 
                filePath.toLowerCase().endsWith('.mov');
     }
+    
+    // File Stream API Methods
+    static getStreamUrl(path) {
+        return `${API_URL}/api/fs/stream/${path}`;
+    }
 }
 export default ApiService;
