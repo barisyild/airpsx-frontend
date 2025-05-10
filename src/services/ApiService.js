@@ -21,7 +21,7 @@ class ApiService {
     }
     static async executeScript(script) {
         try {
-            const response = await fetch(`${API_URL}/api/hscript`, {
+            const response = await fetch(`${API_URL}/api/script/execute`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ class ApiService {
     }
     static async executeScriptStream(script, onChunk) {
         try {
-            const response = await fetch(`${API_URL}/api/hscript`, {
+            const response = await fetch(`${API_URL}/api/script/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ script })
