@@ -116,12 +116,6 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
             >
               {authorName}
             </a>
-            <div className="script-detail-type">
-              Type: {scriptInfo?.type || "RuleScript"}
-            </div>
-            <div className="script-detail-cache">
-              Cache: {scriptInfo?.hasCache ? "Available" : "None"}
-            </div>
             <div className="source-code-link" onClick={viewSourceCode}>
               <span className="code-icon">&#60;/&#62;</span> View source on GitHub
             </div>
