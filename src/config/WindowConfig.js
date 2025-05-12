@@ -7,6 +7,8 @@ import ProcessList from "../components/ProcessList/ProcessList";
 import Profiles from "../components/Profiles/Profiles";
 import Scheduler from "../components/Scheduler/Scheduler";
 import Script from "../components/Script/Script";
+import ScriptStore from "../components/ScriptStore/ScriptStore";
+import ScriptDetail from "../components/ScriptDetail/ScriptDetail";
 import Statistics from "../components/Statistics/Statistics";
 import SystemDetails from "../components/SystemDetails/SystemDetails";
 
@@ -41,6 +43,16 @@ class WindowConfig {
       minWidth: 400,
       minHeight: 300,
       component: Script
+    },
+    scriptStore: {
+      id: 'scriptStore',
+      title: 'Script Store',
+      icon: '📦',
+      defaultWidth: 850,
+      defaultHeight: 600,
+      minWidth: 400,
+      minHeight: 300,
+      component: ScriptStore
     },
     systemInfo: {
       id: 'systemInfo',
@@ -123,6 +135,17 @@ class WindowConfig {
       minHeight: 300,
       visible: false,
       component: ImageViewer
+    },
+    scriptDetail: {
+      id: 'scriptDetail',
+      title: 'Script Detail',
+      icon: '📝',
+      defaultWidth: 700,
+      defaultHeight: 500,
+      minWidth: 400,
+      minHeight: 350,
+      visible: false,
+      component: ScriptDetail
     }
   };
 

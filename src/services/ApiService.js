@@ -419,5 +419,58 @@ class ApiService {
     static getStreamUrl(path) {
         return `${API_URL}/api/fs/stream/${path}`;
     }
+
+    static async getRemoteScripts() {
+        return this.fetch('/api/script/remote/list');
+    }
+
+    static getScriptImageUrl(key) {
+        return `${API_URL}/api/script/remote/image/${key}`;
+    }
+
+    static async executeRemoteScript(key) {
+        try {
+            const response = await fetch(`${API_URL}/api/script/remote/execute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ key })
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.error('Remote script execution error:', error);
+            throw error;
+        }
+    }
+
+    static async executeRemoteScriptStream(key, onChunk) {
+        try {
+            const response = await fetch(`${API_URL}/api/script/remote/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const text = decoder.decode(value);
+                onChunk(text);
+            }
+        } catch (error) {
+            console.error('Remote script execution error:', error);
+            throw error;
+        }
+    }
 }
 export default ApiService;

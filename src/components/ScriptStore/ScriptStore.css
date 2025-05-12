@@ -1,0 +1,278 @@
+.script-store {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.script-store.dark {
+  color: #fff;
+}
+
+.script-store-header {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.script-store.dark .script-store-header {
+  border-bottom: 1px solid #333;
+}
+
+.script-store-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.script-store-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.script-store.dark .script-store-header p {
+  color: #aaa;
+}
+
+.script-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+/* Scrollbar styles for Webkit-based browsers */
+.script-grid::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  opacity: 1;
+}
+
+.script-grid::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px;
+}
+
+.script-grid::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.script-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar styles for Dark mode */
+.script-store.dark .script-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.script-store.dark .script-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar styles for Firefox */
+.script-grid {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.script-store.dark .script-grid {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Hover effect for scrollbar visibility */
+.script-grid {
+  overflow-y: auto;
+}
+
+.script-grid::-webkit-scrollbar {
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.script-grid:hover::-webkit-scrollbar {
+  opacity: 1;
+}
+
+.script-card {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 220px;
+}
+
+.script-store.dark .script-card {
+  background: #2a2a2a;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.script-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.script-store.dark .script-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.script-image {
+  height: 140px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.script-store.dark .script-image {
+  background: #333;
+}
+
+.script-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.script-card:hover .script-image img {
+  transform: scale(1.05);
+}
+
+.script-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.script-status {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.script-info {
+  padding: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.script-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.script-author {
+  color: #666;
+  font-size: 12px;
+  text-decoration: none;
+  margin-top: auto;
+}
+
+.script-store.dark .script-author {
+  color: #aaa;
+}
+
+.script-author:hover {
+  text-decoration: underline;
+  color: #3498db;
+}
+
+.script-store.dark .script-author:hover {
+  color: #5dade2;
+}
+
+.script-store-loading,
+.script-store-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+.script-store-loading p,
+.script-store-error p {
+  margin: 16px 0;
+  color: #666;
+}
+
+.script-store.dark .script-store-loading p,
+.script-store.dark .script-store-error p {
+  color: #aaa;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+.script-store.dark .loading-spinner {
+  border: 3px solid #333;
+  border-top: 3px solid #3498db;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.retry-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.retry-button:hover {
+  background: #2980b9;
+}
+
+.no-scripts-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.script-store.dark .no-scripts-message {
+  color: #aaa;
+} 

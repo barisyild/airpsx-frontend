@@ -1,0 +1,333 @@
+.script-detail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.script-detail.dark {
+  color: #fff;
+}
+
+.script-detail-loading,
+.script-detail-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+.script-detail.dark .loading-spinner {
+  border: 3px solid #333;
+  border-top: 3px solid #3498db;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.retry-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  margin-top: 16px;
+}
+
+.retry-button:hover {
+  background: #2980b9;
+}
+
+.script-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.script-detail.dark .script-detail-header {
+  border-bottom: 1px solid #333;
+}
+
+.script-detail-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.script-detail-image {
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #f5f5f5;
+}
+
+.script-detail.dark .script-detail-image {
+  background: #333;
+}
+
+.script-detail-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.script-detail-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.script-detail-text h2 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.author-link {
+  color: #3498db;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.author-link:hover {
+  text-decoration: underline;
+}
+
+.script-detail-type,
+.script-detail-cache {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.script-detail.dark .script-detail-type,
+.script-detail.dark .script-detail-cache {
+  color: #aaa;
+}
+
+.script-detail-actions {
+  margin-left: auto;
+}
+
+.execute-button {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.execute-button:hover {
+  background: #2ecc71;
+}
+
+.execute-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.execute-button.executing {
+  background: #e74c3c;
+}
+
+.source-code-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: #3498db;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+  width: fit-content;
+}
+
+.source-code-link:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
+.code-icon {
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.script-detail.dark .source-code-link {
+  color: #5dade2;
+}
+
+.script-detail.dark .source-code-link:hover {
+  color: #3498db;
+}
+
+.script-detail-output-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.script-detail.dark .script-detail-output-container {
+  border-color: #333;
+}
+
+.output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #eee;
+}
+
+.script-detail.dark .output-header {
+  background: #333;
+  border-bottom: 1px solid #444;
+}
+
+.output-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.clear-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.clear-button:hover {
+  text-decoration: underline;
+}
+
+.clear-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.script-output {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  font-family: monospace;
+  background: #fafafa;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.script-detail.dark .script-output {
+  background: #222;
+}
+
+/* Scrollbar styles for Webkit-based browsers */
+.script-output::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  opacity: 1;
+}
+
+.script-output::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px;
+}
+
+.script-output::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.script-output::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar styles for Dark mode */
+.script-detail.dark .script-output::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.script-detail.dark .script-output::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar styles for Firefox */
+.script-output {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.script-detail.dark .script-output {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Hover effect for scrollbar visibility */
+.script-output::-webkit-scrollbar {
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.script-output:hover::-webkit-scrollbar {
+  opacity: 1;
+}
+
+.script-error {
+  color: #e74c3c;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-left: 3px solid #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.script-detail.dark .script-error {
+  background: rgba(231, 76, 60, 0.2);
+}
+
+.no-output {
+  color: #777;
+  text-align: center;
+  padding: 20px 0;
+  font-style: italic;
+}
+
+.script-detail.dark .no-output {
+  color: #999;
+} 
