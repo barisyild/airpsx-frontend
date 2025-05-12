@@ -424,6 +424,10 @@ class ApiService {
         return this.fetch('/api/script/remote/list');
     }
 
+    static async searchRemoteScripts(query) {
+        return this.fetch(`/api/script/remote/list?search=${encodeURIComponent(query)}`);
+    }
+
     static getScriptImageUrl(key) {
         return `${API_URL}/api/script/remote/image/${key}`;
     }

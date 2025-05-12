@@ -7,11 +7,15 @@ const ScriptStore = ({ isDarkMode, onOpenWindow }) => {
   const [scripts, setScripts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
 
-  const fetchScripts = async () => {
+  const fetchScripts = async (query = "") => {
     try {
       setLoading(true);
-      const data = await ApiService.getRemoteScripts();
+      const data = query 
+        ? await ApiService.searchRemoteScripts(query)
+        : await ApiService.getRemoteScripts();
       setScripts(data);
       setError(null);
     } catch (err) {
@@ -19,6 +23,7 @@ const ScriptStore = ({ isDarkMode, onOpenWindow }) => {
       setError("Failed to load scripts. Please try again later.");
     } finally {
       setLoading(false);
+      setSearching(false);
     }
   };
 
@@ -26,8 +31,14 @@ const ScriptStore = ({ isDarkMode, onOpenWindow }) => {
     fetchScripts();
   }, []);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setSearching(true);
+    fetchScripts(searchQuery);
+  };
+
   const openScriptDetail = (script) => {
-    // Yeni bir pencere aç ve script detaylarını props olarak geçir
+    // Open a new window and pass script details as props
     onOpenWindow({
       app: 'scriptDetail',
       title: script.name,
@@ -80,14 +91,30 @@ const ScriptStore = ({ isDarkMode, onOpenWindow }) => {
   return (
     <div className={`script-store ${isDarkMode ? "dark" : ""}`}>
       <div className="script-store-header">
-        <h2>Script Store</h2>
-        <p>Browse and run community scripts</p>
+        <div className="header-left">
+          <h2>Script Store</h2>
+          <p>Browse and run community scripts</p>
+        </div>
+        <div className="header-right">
+          <form onSubmit={handleSearch} className="search-form">
+            <input
+              type="text"
+              placeholder="Search scripts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
+              className="search-input"
+            />
+            <button type="submit" className="search-button" disabled={searching}>
+              {searching ? "Searching..." : "Search"}
+            </button>
+          </form>
+        </div>
       </div>
       
       <div className="script-grid">
         {scripts.length === 0 ? (
           <div className="no-scripts-message">
-            No scripts available at the moment.
+            {searchQuery ? `No scripts found for "${searchQuery}"` : "No scripts available at the moment."}
           </div>
         ) : (
           scripts.map((script) => (
