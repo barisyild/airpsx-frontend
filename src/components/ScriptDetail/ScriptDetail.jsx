@@ -60,7 +60,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
   };
   
   const viewSourceCode = () => {
-    window.open(`https://github.com/barisyild/airpsx.com/blob/master/scripts/${scriptKey}/${scriptKey}.rulescript`, '_blank');
+    window.open(`https://github.com/barisyild/airpsx.com/blob/master/scripts/${scriptKey}/${scriptKey}.hx`, '_blank');
   };
 
   if (isLoading) {
