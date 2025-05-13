@@ -136,8 +136,9 @@ const ScriptStore = ({ isDarkMode, onOpenWindow }) => {
                   href={script.authorSrc}
                   className="script-author"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    window.open(script.authorSrc, '_blank');
+                    window.open(script.authorSrc, '_blank', 'noopener,noreferrer');
                   }}
                 >
                   {script.authorName}
