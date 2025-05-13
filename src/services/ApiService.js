@@ -476,5 +476,17 @@ class ApiService {
             throw error;
         }
     }
+
+    static async sendHeartbeat() {
+        try {
+            await fetch(`${API_URL}/api/script/remote/heartbeat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } catch (error) {
+            console.error('Heartbeat error:', error);
+            throw error;
+        }
+    }
 }
 export default ApiService;

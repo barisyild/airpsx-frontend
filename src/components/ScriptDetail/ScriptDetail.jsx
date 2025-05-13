@@ -10,6 +10,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
   const [scriptInfo, setScriptInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const outputRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
 
   // Script hakkında daha fazla bilgi almak için ilk yükleme
   useEffect(() => {
@@ -36,11 +37,34 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
     fetchScriptInfo();
   }, [scriptKey, scriptName, authorName, authorSrc]);
 
+  // Component unmount olduğunda interval'i temizle
+  useEffect(() => {
+    return () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+    };
+  }, []);
+
   const executeScript = async () => {
     try {
       setIsExecuting(true);
       setOutput("");
       setError(null);
+
+      // Heartbeat interval'ini başlat
+      heartbeatIntervalRef.current = setInterval(async () => {
+        try {
+          await ApiService.sendHeartbeat();
+        } catch (err) {
+          console.error("Heartbeat error:", err);
+          // Heartbeat hatası durumunda interval'i temizle
+          if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
+            heartbeatIntervalRef.current = null;
+          }
+        }
+      }, 1000);
 
       // ApiService kullanarak istekte bulun
       await ApiService.executeRemoteScriptStream(scriptKey, (text) => {
@@ -51,9 +75,21 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
           outputRef.current.scrollTop = outputRef.current.scrollHeight;
         }
       });
+
+      // Script tamamlandığında interval'i temizle
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
     } catch (err) {
       console.error("Script execution failed:", err);
       setError(err.message || "Script execution failed");
+      
+      // Hata durumunda interval'i temizle
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
     } finally {
       setIsExecuting(false);
     }
