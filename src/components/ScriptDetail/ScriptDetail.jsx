@@ -9,6 +9,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
   const [error, setError] = useState(null);
   const [scriptInfo, setScriptInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const outputRef = useRef(null);
   const heartbeatIntervalRef = useRef(null);
 
@@ -17,18 +18,42 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
     const fetchScriptInfo = async () => {
       try {
         setIsLoading(true);
-        // Burada script hakkında daha detaylı bilgi alınabilir
-        // Şu anlık sadece parametre olarak gelen bilgileri kullanıyoruz
-        setScriptInfo({
-          key: scriptKey,
-          name: scriptName,
-          authorName: authorName,
-          authorSrc: authorSrc
-        });
+        
+        // Fetch script details from the API
+        const scripts = await ApiService.getRemoteScripts();
+        const currentScript = scripts.find(script => script.key === scriptKey);
+        
+        if (currentScript) {
+          setScriptInfo({
+            key: scriptKey,
+            name: scriptName || currentScript.name,
+            authorName: authorName || currentScript.authorName,
+            authorSrc: authorSrc || currentScript.authorSrc,
+            description: currentScript.description || ""
+          });
+        } else {
+          // Fallback to provided props if script not found in API response
+          setScriptInfo({
+            key: scriptKey,
+            name: scriptName,
+            authorName: authorName,
+            authorSrc: authorSrc,
+            description: ""
+          });
+        }
+        
         setError(null);
       } catch (err) {
         console.error("Failed to fetch script details:", err);
         setError("Failed to load script details. Please try again later.");
+        // Fallback to provided props if API call fails
+        setScriptInfo({
+          key: scriptKey,
+          name: scriptName,
+          authorName: authorName,
+          authorSrc: authorSrc,
+          description: ""
+        });
       } finally {
         setIsLoading(false);
       }
@@ -99,6 +124,58 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
     window.open(`https://github.com/barisyild/airpsx.com/blob/master/scripts/${scriptKey}/${scriptKey}.hx`, '_blank');
   };
 
+  // Function to determine if the description is long enough to need a "Show More" button
+  const isDescriptionLong = (description) => {
+    if (!description) return false;
+    const lines = description.split('\n');
+    return lines.length > 3;
+  };
+
+  // Function to render the description with HTML support
+  const renderDescription = () => {
+    if (!scriptInfo?.description) return null;
+    
+    const description = scriptInfo.description;
+    
+    if (!showFullDescription && isDescriptionLong(description)) {
+      // Get first 3 lines for preview
+      const lines = description.split('\n');
+      const previewText = lines.slice(0, 3).join('\n');
+      
+      return (
+        <div className="script-description-container">
+          <div 
+            className="script-description" 
+            dangerouslySetInnerHTML={{ __html: previewText }}
+          />
+          <button 
+            className="show-more-button" 
+            onClick={() => setShowFullDescription(true)}
+          >
+            Show More
+          </button>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="script-description-container">
+        <div 
+          className="script-description" 
+          dangerouslySetInnerHTML={{ __html: description }}
+        />
+        {showFullDescription && isDescriptionLong(description) && (
+          <button 
+            className="show-less-button" 
+            onClick={() => setShowFullDescription(false)}
+          >
+            Show Less
+          </button>
+        )}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className={`script-detail ${isDarkMode ? "dark" : ""}`}>
@@ -155,6 +232,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
             <div className="source-code-link" onClick={viewSourceCode}>
               <span className="code-icon">&#60;/&#62;</span> View source on GitHub
             </div>
+            {renderDescription()}
           </div>
         </div>
 
@@ -198,4 +276,4 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
   );
 };
 
-export default ScriptDetail; 
+export default ScriptDetail;
