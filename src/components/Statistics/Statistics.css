@@ -129,3 +129,52 @@
     color: #fff;
   }
   
+  .statistics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .statistics-header h2 {
+    font-size: 16px;
+    margin: 0;
+    color: #333;
+  }
+  
+  .dark .statistics-header h2 {
+    color: #fff;
+  }
+  
+  .export-button {
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    float: right;
+  }
+  
+  .export-button:hover {
+    background: #2980b9;
+  }
+  
+  .export-button:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+  }
+  
+  .dark .export-button {
+    background: #2980b9;
+  }
+  
+  .dark .export-button:hover {
+    background: #1a5276;
+  }
+  
+  .dark .export-button:disabled {
+    background: #7f8c8d;
+  }

@@ -75,6 +75,51 @@ const Statistics = ({ isDarkMode }) => {
     };
   };
 
+  const exportToCSV = () => {
+    if (stats.length === 0) return;
+
+    // Create CSV header
+    const headers = [
+      "Timestamp",
+      "CPU Frequency (MHz)",
+      "CPU Temperature (°C)",
+      "SoC Temperature (°C)",
+      "Title ID",
+      "Title Name"
+    ];
+
+    // Create CSV content
+    const csvContent = stats.map(stat => {
+      const timestamp = new Date(stat.timestamp).toISOString();
+      const frequency = (stat.frequency / 1000000).toFixed(2);
+      const temperature = stat.temperature.toFixed(2);
+      const socTemp = stat.socSensorTemperature.toFixed(2);
+      const titleID = stat.titleID || "";
+      const titleName = stat.titleName || "";
+
+      return [timestamp, frequency, temperature, socTemp, titleID, titleName].join(",");
+    });
+
+    // Combine header and content
+    const csv = [headers.join(","), ...csvContent].join("\n");
+
+    // Create a Blob and download link
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    // Set filename with current date
+    const date = new Date().toISOString().split("T")[0];
+    link.setAttribute("href", url);
+    link.setAttribute("download", `system-stats-${date}.csv`);
+    link.style.visibility = "hidden";
+    
+    // Append to document, click and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -166,6 +211,14 @@ const Statistics = ({ isDarkMode }) => {
       ) : (
         <div className="statistics-content">
           <div className="chart-container">
+            <button
+                className="export-button"
+                onClick={exportToCSV}
+                disabled={stats.length === 0}
+                title="Export statistics to CSV file"
+            >
+              Export CSV
+            </button>
             <Line options={chartOptions} data={chartData} />
           </div>
           <div className="stats-averages">
