@@ -19,7 +19,7 @@ class ApiService {
     static async getProcessList() {
         return this.fetch('/api/process/list');
     }
-    static async executeScript(script) {
+    static async executeScript(script, language = 'rulescript') {
         try {
             const response = await fetch(`${API_URL}/api/script/execute`, {
                 method: 'POST',
@@ -27,7 +27,8 @@ class ApiService {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    script
+                    script: script,
+                    type: language
                 })
             });
             if (!response.ok) throw new Error('Network response was not ok');
@@ -37,12 +38,15 @@ class ApiService {
             throw error;
         }
     }
-    static async executeScriptStream(script, onChunk) {
+    static async executeScriptStream(script, onChunk, language = 'rulescript') {
         try {
             const response = await fetch(`${API_URL}/api/script/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ script })
+                body: JSON.stringify({ 
+                    script: script,
+                    type: language
+                })
             });
             const reader = response.body.getReader();
             while (true) {
@@ -135,12 +139,12 @@ class ApiService {
             throw error;
         }
     }
-    static async createTask(name) {
+    static async createTask(name, type = 'rulescript') {
         try {
             const response = await fetch(`${API_URL}/api/task/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
+                body: JSON.stringify({ name, type })
             });
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();

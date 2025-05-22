@@ -4,6 +4,8 @@ import CodeMirror from "codemirror";
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/monokai.css";
 import "codemirror/mode/javascript/javascript";
+import "codemirror/mode/lua/lua";
+import "codemirror/mode/haxe/haxe";
 import ApiService from "../../services/ApiService";
 import "./Scheduler.css";
 
@@ -20,7 +22,19 @@ const FREQUENCY_OPTIONS = [
   { label: "1 Week", value: 604800 }
 ];
 
-const Scheduler = ({ isDarkMode }) => {
+const translations = {
+  en: {
+    currentMode: "Current mode:",
+    switchToRuleScript: "Switch to RuleScript",
+    switchToLua: "Switch to Lua",
+    placeholder: {
+      rulescript: "// Write your HScript code here",
+      lua: "-- Write your Lua code here"
+    }
+  },
+};
+
+const Scheduler = ({ isDarkMode, language = "en" }) => {
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +46,68 @@ const Scheduler = ({ isDarkMode }) => {
   const [currentScript, setCurrentScript] = useState('');
   const [showLogs, setShowLogs] = useState(false);
   const [runningTask, setRunningTask] = useState(null);
+  const [scriptMode, setScriptMode] = useState("rulescript"); // Default to rulescript
+  const t = translations[language] || translations.en;
+
+  // Sample templates for each language
+  const templates = {
+    rulescript: '',
+    lua: ''
+  };
+
+  const switchLanguage = (newMode) => {
+    if (newMode === scriptMode) return;
+    
+    // No need to ask for confirmation or reset script content
+    // Just switch the mode and update syntax highlighting
+    
+    setScriptMode(newMode);
+    
+    // Update CodeMirror mode without changing content
+    if (cmRef.current) {
+      if(newMode === "rulescript")
+        cmRef.current.setOption("mode", "haxe");
+      else
+        cmRef.current.setOption("mode", newMode);
+
+      cmRef.current.setOption("placeholder", t.placeholder[newMode]);
+    }
+    
+    // If a task is selected, update it with the new script type but keep the same content
+    if (selectedTask) {
+      updateTaskWithNewMode(newMode, currentScript);
+    }
+  };
+  
+  const updateTaskWithNewMode = async (newMode, script) => {
+    try {
+      await ApiService.updateTask(selectedTask.id, {
+        type: newMode
+      });
+      
+      // Comment out the setSelectedTask to avoid showing output message
+      /*setSelectedTask(prev => ({
+        ...prev, 
+        script: script,
+        type: newMode,
+        output: `Switched to ${newMode === 'rulescript' ? 'RuleScript' : 'Lua'} mode`
+      }));*/
+      
+      setTasks(tasks.map(task => 
+        task.id === selectedTask.id ? {
+          ...task, 
+          script: script,
+          type: newMode
+        } : task
+      ));
+    } catch (err) {
+      console.error("Script type update failed:", err);
+      setSelectedTask(prev => ({ 
+        ...prev, 
+        output: `Error updating script type: ${err.message}`
+      }));
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -57,6 +133,8 @@ const Scheduler = ({ isDarkMode }) => {
       const data = await ApiService.getTaskDetail(id);
       setSelectedTask(data);
       setCurrentScript(data.script || '');
+      // Set script mode based on task data or default to rulescript
+      setScriptMode(data.type || 'rulescript');
       setEditedName('');
       setIsEditingName(false);
       setShowLogs(false);
@@ -156,7 +234,7 @@ const Scheduler = ({ isDarkMode }) => {
       }
 
       cmRef.current = CodeMirror.fromTextArea(editorRef.current, {
-        mode: "haxe",
+        mode: scriptMode === "rulescript" ? "haxe" : scriptMode,
         theme: isDarkMode ? "monokai" : "default",
         lineNumbers: true,
         matchBrackets: true,
@@ -164,6 +242,7 @@ const Scheduler = ({ isDarkMode }) => {
         indentWithTabs: true,
         readOnly: false,
         autofocus: true,
+        placeholder: t.placeholder[scriptMode],
       });
 
       // Update currentScript first, then set the editor
@@ -185,7 +264,7 @@ const Scheduler = ({ isDarkMode }) => {
         }
       };
     }
-  }, [selectedTask, isDarkMode]);
+  }, [selectedTask, isDarkMode, scriptMode]);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "Never";
@@ -203,7 +282,7 @@ const Scheduler = ({ isDarkMode }) => {
           output: prev.output ? prev.output + chunk : chunk,
           script: currentScript // update script
         }));
-      });
+      }, scriptMode); // Pass the current script mode to the API
     } catch (err) {
       console.error("Script çalıştırılamadı:", err);
       setSelectedTask(prev => ({ 
@@ -216,15 +295,23 @@ const Scheduler = ({ isDarkMode }) => {
 
   const handleSaveScript = async () => {
     try {
-      await ApiService.updateTask(selectedTask.id, { script: currentScript });
+      await ApiService.updateTask(selectedTask.id, { 
+        script: currentScript,
+        type: scriptMode // Save the script type with the task
+      });
       
       setSelectedTask(prev => ({
         ...prev, 
         script: currentScript,
+        type: scriptMode,
         output: 'Task saved successfully!'
       }));
       setTasks(tasks.map(task => 
-        task.id === selectedTask.id ? {...task, script: currentScript} : task
+        task.id === selectedTask.id ? {
+          ...task, 
+          script: currentScript,
+          type: scriptMode
+        } : task
       ));
     } catch (err) {
       console.error("Script kaydedilemedi:", err);
@@ -269,9 +356,17 @@ const Scheduler = ({ isDarkMode }) => {
   const handleCreateTask = async () => {
     try {
       const newTask = await ApiService.createTask("New Task");
+      // Set default type to rulescript if not provided by API
+      if (!newTask.type) {
+        newTask.type = 'rulescript';
+      }
       setTasks([...tasks, newTask]);
       // Use data directly from create instead of calling the Detail API
       setSelectedTask(newTask);
+      // Set script mode based on the new task's type
+      setScriptMode(newTask.type);
+      // Set empty script
+      setCurrentScript('');
     } catch (err) {
       console.error("Task oluşturulamadı:", err);
     }
@@ -465,6 +560,23 @@ const Scheduler = ({ isDarkMode }) => {
             <div className="script-section">
               <div className="script-header">
                 <h3>Script</h3>
+                <div className="language-selector">
+                  <span>{t.currentMode} </span>
+                  <div className="language-buttons">
+                    <button 
+                      className={`language-btn ${scriptMode === 'rulescript' ? 'active' : ''}`}
+                      onClick={() => switchLanguage('rulescript')}
+                    >
+                      RuleScript
+                    </button>
+                    <button 
+                      className={`language-btn ${scriptMode === 'lua' ? 'active' : ''}`} 
+                      onClick={() => switchLanguage('lua')}
+                    >
+                      Lua
+                    </button>
+                  </div>
+                </div>
                 <div className="script-actions">
                   <button 
                     className="script-button try"

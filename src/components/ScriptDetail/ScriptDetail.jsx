@@ -29,7 +29,8 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
             name: scriptName || currentScript.name,
             authorName: authorName || currentScript.authorName,
             authorSrc: authorSrc || currentScript.authorSrc,
-            description: currentScript.description || ""
+            description: currentScript.description || "",
+            type: currentScript.type || "rulescript" // Default to rulescript if type is not provided
           });
         } else {
           // Fallback to provided props if script not found in API response
@@ -38,7 +39,8 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
             name: scriptName,
             authorName: authorName,
             authorSrc: authorSrc,
-            description: ""
+            description: "",
+            type: "rulescript" // Default to rulescript
           });
         }
         
@@ -52,7 +54,8 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
           name: scriptName,
           authorName: authorName,
           authorSrc: authorSrc,
-          description: ""
+          description: "",
+          type: "rulescript" // Default to rulescript
         });
       } finally {
         setIsLoading(false);
@@ -121,7 +124,9 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
   };
   
   const viewSourceCode = () => {
-    window.open(`https://github.com/barisyild/airpsx.com/blob/master/scripts/${scriptKey}/${scriptKey}.hx`, '_blank');
+    // Determine file extension based on script type
+    const fileExtension = scriptInfo?.type === 'lua' ? '.lua' : '.hx';
+    window.open(`https://github.com/barisyild/airpsx.com/blob/master/scripts/${scriptKey}/${scriptKey}${fileExtension}`, '_blank');
   };
 
   // Function to determine if the description is long enough to need a "Show More" button
