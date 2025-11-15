@@ -14,7 +14,7 @@ const ProcessList = ({ isDarkMode }) => {
     key: "pid",
     direction: "asc",
   });
-  const [uptimeRefresh, setUptimeRefresh] = useState(0);
+  const [setUptimeRefresh] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {

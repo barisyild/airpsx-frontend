@@ -1,7 +1,6 @@
 import { h } from "preact";
 import { useState, useRef, useEffect } from "preact/hooks";
 import "./Window.css";
-import IconService from "../../services/IconService";
 
 const Window = ({
   window,

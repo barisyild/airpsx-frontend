@@ -6,9 +6,9 @@ import "./SystemStatus.css";
 const SystemStatus = ({ isDarkMode }) => {
   const [systemInfo, setSystemInfo] = useState(null);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [setIsLoading] = useState(true);
   const [updatedFields, setUpdatedFields] = useState(new Set());
-  const [uptimeRefresh, setUptimeRefresh] = useState(0);
+  const [setUptimeRefresh] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {

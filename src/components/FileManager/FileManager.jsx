@@ -502,17 +502,6 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     }
   };
 
-  const createNewFolder = () => {
-    const newId = Math.max(...items.map((item) => item.id)) + 1;
-    const newFolder = {
-      id: newId,
-      name: "New Folder",
-      type: "folder",
-    };
-    setItems([...items, newFolder]);
-    setContextMenu({ ...contextMenu, show: false });
-  };
-
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';

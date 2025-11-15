@@ -49,12 +49,6 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
   const [scriptMode, setScriptMode] = useState("rulescript"); // Default to rulescript
   const t = translations[language] || translations.en;
 
-  // Sample templates for each language
-  const templates = {
-    rulescript: '',
-    lua: ''
-  };
-
   const switchLanguage = (newMode) => {
     if (newMode === scriptMode) return;
     
@@ -203,11 +197,6 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
         script: currentScript
       }));
     }
-  };
-
-  const getFrequencyLabel = (seconds) => {
-    const option = FREQUENCY_OPTIONS.find(opt => opt.value === seconds);
-    return option ? option.label : `${seconds} seconds`;
   };
 
   useEffect(() => {

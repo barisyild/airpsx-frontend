@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "preact/hooks";
 import "./MediaPlayer.css";
 import ApiService from "../../services/ApiService";
 
-const MediaPlayer = ({ mediaFile, currentPath, onClose }) => {
+const MediaPlayer = ({ mediaFile, currentPath }) => {
   const [loading, setLoading] = useState(true);
   const isAudioFile = isAudioFileType(mediaFile?.name);
   const audioRef = useRef(null);
