@@ -3,11 +3,14 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import Window from "../Window/Window";
 import TaskBar from "../TaskBar/TaskBar";
 import SystemMonitor from "../SystemStatus/SystemStatus";
+import IconService from "../../services/IconService";
 import SystemDetails from "../SystemDetails/SystemDetails";
 import ApiService from "../../services/ApiService";
 import WindowConfig from "../../config/WindowConfig";
 import "./Desktop.css";
 import Disclaimer from "../Disclaimer/Disclaimer";
+
+const isConsole = /PlayStation/i.test(navigator.userAgent);
 
 const Desktop = () => {
   const [desktopItems] = useState(WindowConfig.getDesktopItems());
@@ -27,7 +30,7 @@ const Desktop = () => {
   const [storage, setStorage] = useState([]);
   const [storageError, setStorageError] = useState(null);
   const [isStorageLoading, setIsStorageLoading] = useState(true);
-  const [language] = useState("tr");
+  const [language, setLanguage] = useState("tr");
   const [lastClickTime, setLastClickTime] = useState({
     id: null,
     time: 0,
@@ -411,7 +414,7 @@ const Desktop = () => {
           progress
         }));
       })
-      .then(_ => {
+      .then(response => {
         setPkgUploadStatus({
           uploading: false,
           progress: 100,
@@ -523,7 +526,7 @@ const Desktop = () => {
       )}
       <div className="desktop-content">
         <div className="desktop-icons">
-          {desktopItems.map((item, _) => (
+          {desktopItems.map((item, index) => (
             <div
               key={item.id}
               className={`desktop-item ${
@@ -556,7 +559,7 @@ const Desktop = () => {
           ) : storageError ? (
             <div className="storage-error">{storageError}</div>
           ) : (
-            storage.map((drive, _) => (
+            storage.map((drive, index) => (
               <div key={drive.path} className="storage-item">
                 <div className="storage-icon icon">{getStorageIcon(drive.name)}</div>
                 <div className="storage-info">

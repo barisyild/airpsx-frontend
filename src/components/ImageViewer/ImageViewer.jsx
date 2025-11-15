@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import "./ImageViewer.css";
 import ApiService from "../../services/ApiService";
 
-const ImageViewer = ({ imageFile, currentPath }) => {
+const ImageViewer = ({ imageFile, currentPath, onClose }) => {
   const [loading, setLoading] = useState(true);
   const imgRef = useRef(null);
   const abortControllerRef = useRef(null);

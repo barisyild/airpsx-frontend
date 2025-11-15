@@ -1,5 +1,6 @@
 import { h } from "preact";
 import "./TaskBar.css";
+import IconService from "../../services/IconService";
 const TaskBar = ({
   windows,
   activeWindow,
