@@ -401,6 +401,12 @@ const Desktop = () => {
   // Function to handle PKG file uploads
   const handlePkgFileUpload = (file) => {
     if (file && file.name.toLowerCase().endsWith('.pkg')) {
+      // If there's an active upload, stop it first
+      if (pkgUploadStatus.uploading) {
+        console.log('[Desktop] Stopping previous PKG upload...');
+        ApiService.stopPkgUpload();
+      }
+      
       setPkgUploadStatus({
         uploading: true,
         progress: 0,
@@ -408,34 +414,39 @@ const Desktop = () => {
         success: false
       });
       
-      ApiService.uploadPkg(file, (progress) => {
-        setPkgUploadStatus(prev => ({
-          ...prev,
-          progress
-        }));
-      })
-      .then(response => {
-        setPkgUploadStatus({
-          uploading: false,
-          progress: 100,
-          error: null,
-          success: true
-        });
-        
-        setTimeout(() => {
+      ApiService.uploadPkg(
+        file, 
+        (progress) => {
+          // Progress callback - chunk upload progress
+          setPkgUploadStatus(prev => ({
+            ...prev,
+            progress: Math.min(progress, 100) // Ensure it doesn't exceed 100
+          }));
+        },
+        (completeData) => {
+          // Complete callback - upload fully completed
           setPkgUploadStatus({
             uploading: false,
-            progress: 0,
+            progress: 100,
             error: null,
-            success: false
+            success: true
           });
-        }, 3000);
-      })
+          
+          setTimeout(() => {
+            setPkgUploadStatus({
+              uploading: false,
+              progress: 0,
+              error: null,
+              success: false
+            });
+          }, 3000);
+        }
+      )
       .catch(error => {
         setPkgUploadStatus({
           uploading: false,
           progress: 0,
-          error: error.message || 'An error occurred during installation\n',
+          error: error.message || 'An error occurred during upload',
           success: false
         });
       });

@@ -1,3 +1,5 @@
+import PackageQueueService from './PackageQueueService.js';
+
 const API_URL = import.meta.env.VITE_API_URL.endsWith('/') ? import.meta.env.VITE_API_URL.slice(0, -1) : import.meta.env.VITE_API_URL;
 class ApiService {
     static async fetch(endpoint) {
@@ -305,66 +307,89 @@ class ApiService {
         }
     }
 
-    static async uploadPkg(file, onProgress) {
+    static stopPkgUpload() {
+        // Stop the package queue service
+        PackageQueueService.stopQueue();
+    }
+
+    static async uploadPkg(file, onProgress, onComplete) {
         return new Promise((resolve, reject) => {
 
             const length = 65536;
             if (file.size < length) {
-                console.error("The file is not big enough.");
+                reject(new Error("The file is not big enough."));
                 return;
             }
 
             const blob = file.slice(0, length);
             const reader = new FileReader();
 
-            reader.onload = (e) => {
-                const buffer = new DataView(e.target.result);
+            reader.onload = async (e) => {
+                const result = e.target.result;
+                if (!(result instanceof ArrayBuffer)) {
+                    reject(new Error("Read file error."));
+                    return;
+                }
+                
+                const buffer = new DataView(result);
 
                 const magic = buffer.getUint32(0x00, false);
-                let packageOffset = 0n;
-                const blobs = [];
+                let packageOffset = 0;
 
                 // PS5 PKG
                 if(magic === 0x7F464948)
                 {
-                    packageOffset = parseInt(buffer.getBigInt64(0x58, true));
-                    blobs.push(file.slice(packageOffset, file.size), file.slice(0, packageOffset));
+                    packageOffset = Number(buffer.getBigInt64(0x58, true));
                 }
                 // PS4 PKG
                 else if (magic === 0x7F434E54)
                 {
-                    blobs.push(file);
-                }else{
-                    console.error("Dosya yeterince büyük değil.");
+                    packageOffset = 0;
+                }
+                else {
+                    reject(new Error("Invalid PKG file."));
                     return;
                 }
 
-                const xhr = new XMLHttpRequest();
-                const formData = new FormData();
-                formData.append('file', new Blob(blobs, { type: file.type }));
+                try {
+                    const xhr = new XMLHttpRequest();
+                    const formData = new FormData();
 
-                xhr.open('POST', `${API_URL}/api/package/upload?size=${file.size}&offset=${packageOffset}`, true);
+                    xhr.open('POST', `${API_URL}/api/package/upload/init?size=${file.size}`, true);
 
-                xhr.upload.onprogress = (event) => {
-                    if (event.lengthComputable && onProgress) {
-                        const percentComplete = (event.loaded / event.total) * 100;
-                        onProgress(percentComplete);
-                    }
-                };
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            const jsonData = JSON.parse(xhr.responseText);
+                            
+                            // Start the queue
+                            PackageQueueService.startQueue(
+                                file, 
+                                jsonData.sessionKey, 
+                                onProgress,
+                                (completeData) => {
+                                    if (onComplete) {
+                                        onComplete(completeData);
+                                    }
+                                    resolve(completeData);
+                                },
+                                (error) => {
+                                    reject(error);
+                                }
+                            );
+                        } else {
+                            reject(new Error('Network response was not ok'));
+                        }
+                    };
 
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(JSON.parse(xhr.responseText));
-                    } else {
-                        reject(new Error('Network response was not ok'));
-                    }
-                };
+                    xhr.onerror = () => reject(new Error('Network error'));
 
-                xhr.onerror = () => reject(new Error('Network error'));
-
-                xhr.send(formData);
+                    xhr.send(formData);
+                } catch (error) {
+                    reject(error);
+                }
             };
 
+            reader.onerror = () => reject(new Error('File read error'));
             reader.readAsArrayBuffer(blob);
         });
     }
