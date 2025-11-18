@@ -388,6 +388,10 @@ class PackageQueueService {
         this.isRunning = false;
         this.reset();
     }
+
+    static getSessionKey() {
+        return this.sessionKey;
+    }
 }
 
 export default PackageQueueService;

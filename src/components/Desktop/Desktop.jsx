@@ -460,6 +460,37 @@ const Desktop = () => {
     }
   };
 
+  // Function to handle PKG upload cancellation
+  const handleCancelUpload = async () => {
+    try {
+      const sessionKey = ApiService.getSessionKey();
+      
+      // Stop the upload queue first
+      ApiService.stopPkgUpload();
+      
+      // Call the cancel API
+      if (sessionKey) {
+        await ApiService.cancelPkgUpload(sessionKey);
+      }
+      
+      // Reset the upload status
+      setPkgUploadStatus({
+        uploading: false,
+        progress: 0,
+        error: null,
+        success: false
+      });
+    } catch (error) {
+      console.error('[Desktop] Failed to cancel upload:', error);
+      setPkgUploadStatus({
+        uploading: false,
+        progress: 0,
+        error: 'Upload cancelled',
+        success: false
+      });
+    }
+  };
+
   // Handle package installation from URL
   const handleUrlInstall = async () => {
     if (!packageUrl.trim()) {
@@ -645,6 +676,15 @@ const Desktop = () => {
                   <div className="progress-text">
                     Uploading: %{pkgUploadStatus.progress.toFixed(1)}
                   </div>
+                  <button 
+                    className="cancel-upload-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelUpload();
+                    }}
+                  >
+                    Cancel
+                  </button>
                 </div>
               ) : pkgUploadStatus.error ? (
                 <div className="pkg-upload-error">

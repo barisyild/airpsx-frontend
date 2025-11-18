@@ -312,6 +312,31 @@ class ApiService {
         PackageQueueService.stopQueue();
     }
 
+    static getSessionKey() {
+        return PackageQueueService.getSessionKey();
+    }
+
+    static async cancelPkgUpload(sessionKey) {
+        try {
+            const response = await fetch(`${API_URL}/api/package/upload/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sessionKey })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to cancel package upload');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Cancel package upload error:', error);
+            throw error;
+        }
+    }
+
     static async uploadPkg(file, onProgress, onComplete) {
         return new Promise((resolve, reject) => {
 
