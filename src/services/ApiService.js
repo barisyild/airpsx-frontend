@@ -1,4 +1,6 @@
 import PackageQueueService from './PackageQueueService.js';
+import {OrbisPkgParser} from "../class/OrbisPkgReader.js";
+import {ProsperoPkgParser} from "../class/ProsperoPkgParser.js";
 
 const API_URL = import.meta.env.VITE_API_URL.endsWith('/') ? import.meta.env.VITE_API_URL.slice(0, -1) : import.meta.env.VITE_API_URL;
 class ApiService {
@@ -337,39 +339,73 @@ class ApiService {
         }
     }
 
+    static async tempFile(dataView) {
+        const response = await fetch(`${API_URL}/api/fs/temp/file`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/octet-stream',
+            },
+            body: dataView
+        });
+
+        const json = await response.json();
+        return json.path;
+    }
+
     static async uploadPkg(file, onProgress, onComplete) {
         return new Promise((resolve, reject) => {
+            (async () => {
+                const magicBuffer = await file.slice(0, 4).arrayBuffer();
+                const magicBufferView = new DataView(magicBuffer);
+                const magic = magicBufferView.getUint32(0x00, false);
 
-            const length = 65536;
-            if (file.size < length) {
-                reject(new Error("The file is not big enough."));
-                return;
-            }
+                var title = "CUSA12345";
+                var titleId = "CUSA12345";
+                var iconPath = null;
 
-            const blob = file.slice(0, length);
-            const reader = new FileReader();
-
-            reader.onload = async (e) => {
-                const result = e.target.result;
-                if (!(result instanceof ArrayBuffer)) {
-                    reject(new Error("Read file error."));
-                    return;
-                }
-                
-                const buffer = new DataView(result);
-
-                const magic = buffer.getUint32(0x00, false);
-                let packageOffset = 0;
-
-                // PS5 PKG
+                // Prospero PKG
                 if(magic === 0x7F464948)
                 {
-                    packageOffset = Number(buffer.getBigInt64(0x58, true));
+                    try {
+                        var prosperoPkgParser = new ProsperoPkgParser(file);
+                        const { sfo, icon } = await prosperoPkgParser.parsePkg();
+                        title = sfo.TITLE;
+                        titleId = sfo.TITLE_ID;
+                        iconPath = `${API_URL}/api/fs/stream/${await ApiService.tempFile(icon)}`;
+                    } catch (e) {
+                        console.error("Error parsing Prospero PKG:", e);
+                        try {
+                            // Try with metadata
+                            const packageBuffer = await file.slice(0x58, 0x58 + 8).arrayBuffer();
+                            const packageBufferView = new DataView(packageBuffer);
+                            let packageOffset = parseInt(packageBufferView.getBigInt64(0, true));
+
+                            const titleBuffer = await file.slice(packageOffset + 0x47, packageOffset + 0x47 + 9).arrayBuffer();
+                            const titleBufferView = new DataView(titleBuffer);
+                            title = titleId = new TextDecoder().decode(titleBufferView);
+                        } catch (ex) {
+                            console.error("Error parsing Prospero Metadata:", ex);
+                        }
+                    }
                 }
-                // PS4 PKG
+                // Orbis PKG
                 else if (magic === 0x7F434E54)
                 {
-                    packageOffset = 0;
+                    try {
+                        var orbisPkgParser = new OrbisPkgParser(file);
+                        const { sfo, icon } = await orbisPkgParser.parsePkg();
+                        title = sfo.TITLE;
+                        titleId = sfo.TITLE_ID;
+                        iconPath = `${API_URL}/api/fs/stream/${await ApiService.tempFile(icon)}`;
+                    } catch (e) {
+                        console.error("Error parsing Orbis PKG:", e);
+                        try {
+                            // Try with metadata
+                            title = titleId = new TextDecoder().decode(await file.slice(0x47, 0x47 + 9).arrayBuffer());
+                        } catch (ex) {
+                            console.error("Error parsing Orbis Metadata:", ex);
+                        }
+                    }
                 }
                 else {
                     reject(new Error("Invalid PKG file."));
@@ -380,16 +416,16 @@ class ApiService {
                     const xhr = new XMLHttpRequest();
                     const formData = new FormData();
 
-                    xhr.open('POST', `${API_URL}/api/package/upload/init?size=${file.size}`, true);
+                    xhr.open('POST', `${API_URL}/api/package/upload/init?size=${file.size}&titleId=${titleId}&title=${title}&iconPath=${iconPath}`, true);
 
                     xhr.onload = () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
                             const jsonData = JSON.parse(xhr.responseText);
-                            
+
                             // Start the queue
                             PackageQueueService.startQueue(
-                                file, 
-                                jsonData.sessionKey, 
+                                file,
+                                jsonData.sessionKey,
                                 onProgress,
                                 (completeData) => {
                                     if (onComplete) {
@@ -412,10 +448,9 @@ class ApiService {
                 } catch (error) {
                     reject(error);
                 }
-            };
+            })();
 
-            reader.onerror = () => reject(new Error('File read error'));
-            reader.readAsArrayBuffer(blob);
+
         });
     }
 
