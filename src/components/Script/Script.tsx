@@ -8,9 +8,28 @@ import "codemirror/mode/lua/lua";
 import "codemirror/mode/haxe/haxe";
 import ApiService from "../../services/ApiService";
 import "./Script.css";
-  
 
-const translations = {
+interface ScriptProps {
+  isDarkMode: boolean;
+  language?: string;
+}
+
+interface Translations {
+  [key: string]: {
+    run: string;
+    placeholder: {
+      rulescript: string;
+      lua: string;
+    };
+    executedCode: string;
+    result: string;
+    switchToRuleScript: string;
+    switchToLua: string;
+    currentMode: string;
+  };
+}
+
+const translations: Translations = {
   en: {
     run: "▶ Run",
     placeholder: {
@@ -25,25 +44,25 @@ const translations = {
   },
 };
 
-const Script = ({ isDarkMode, language = "en" }) => {
+const Script = ({ isDarkMode, language = "en" }: ScriptProps) => {
   const [content, setContent] = useState(
     'sceKernelSendNotificationRequest("Hello World");'
   );
   const [output, setOutput] = useState("");
   const [scriptMode, setScriptMode] = useState("rulescript"); // Default to rulescript
-  const editorRef = useRef(null);
-  const cmRef = useRef(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const cmRef = useRef<CodeMirror.EditorFromTextArea | null>(null);
   const t = translations[language] || translations.en;
 
   // Sample templates for each language
-  const templates = {
+  const templates: Record<string, string> = {
     rulescript: 'sceKernelSendNotificationRequest("Hello World");',
     lua: 'function main()\n' +
         '\tsceKernelSendNotificationRequest("Hello World")\n' +
         'end'
   };
 
-  const switchLanguage = (newMode) => {
+  const switchLanguage = (newMode: string) => {
     if (newMode === scriptMode) return;
     
     // Ask for confirmation if there's content
@@ -67,7 +86,7 @@ const Script = ({ isDarkMode, language = "en" }) => {
         cmRef.current.setOption("mode", newMode);
 
       cmRef.current.setValue(templates[newMode]);
-      cmRef.current.setOption("placeholder", t.placeholder[newMode]);
+      cmRef.current.setOption("placeholder", t.placeholder[newMode as keyof typeof t.placeholder]);
     }
   };
 
@@ -84,7 +103,7 @@ const Script = ({ isDarkMode, language = "en" }) => {
         matchBrackets: true,
         indentUnit: 4,
         indentWithTabs: true,
-        placeholder: t.placeholder[scriptMode],
+        placeholder: t.placeholder[scriptMode as keyof typeof t.placeholder],
       });
 
       cmRef.current.on("change", (cm) => {
@@ -116,7 +135,7 @@ const Script = ({ isDarkMode, language = "en" }) => {
         setOutput((prev) => prev + chunk);
       }, scriptMode); // Pass the current script mode to the API
     } catch (error) {
-      setOutput("Error: " + error.message);
+      setOutput("Error: " + (error as Error).message);
     }
   };
 
@@ -161,3 +180,4 @@ const Script = ({ isDarkMode, language = "en" }) => {
 };
 
 export default Script;
+

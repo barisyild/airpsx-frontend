@@ -4,15 +4,43 @@ import ApiService from "../../services/ApiService";
 import ToastService from "../../services/ToastService";
 import "./MediaGallery.css";
 
-const MediaGallery = ({ isDarkMode }) => {
-  const [media, setMedia] = useState([]);
-  const [titles, setTitles] = useState({});
+interface MediaGalleryProps {
+  isDarkMode: boolean;
+}
+
+interface MediaMeta {
+  appVerTitleId?: string;
+  segmentInfo?: {
+    start: string;
+    mediaTime?: number[][];
+  };
+}
+
+interface MediaExt {
+  trophy?: boolean;
+}
+
+interface MediaItem {
+  filePath: string;
+  meta?: MediaMeta;
+  ext?: MediaExt;
+  isVideo: boolean;
+  isJxr: boolean;
+  hasTrophy: boolean;
+  titleId?: string;
+  duration: number | null;
+  date: Date;
+}
+
+const MediaGallery = ({ isDarkMode }: MediaGalleryProps) => {
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [titles, setTitles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [gameFilter, setGameFilter] = useState("all");
   const [sort, setSort] = useState("date-desc");
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
@@ -25,7 +53,7 @@ const MediaGallery = ({ isDarkMode }) => {
       setError(null);
       
       const data = await ApiService.getMediaList();
-      const entries = data.entries.map(entry => {
+      const entries = data.entries.map((entry: any) => {
         const isVideo = entry.filePath.toLowerCase().endsWith('.mp4');
         const isJxr = isJxrFormat(entry.filePath);
         const hasTrophy = entry.ext && entry.ext.trophy;
@@ -65,18 +93,18 @@ const MediaGallery = ({ isDarkMode }) => {
   };
 
   // Function to check if an image is in JXR format
-  const isJxrFormat = (filePath) => {
+  const isJxrFormat = (filePath: string): boolean => {
     if (!filePath) return false;
     const path = filePath.toLowerCase();
     return path.endsWith('.jxr') || path.endsWith('.wdp') || path.endsWith('.hdp');
   };
 
-  const downloadMedia = (mediaItem) => {
+  const downloadMedia = (mediaItem: MediaItem) => {
     try {
       const url = ApiService.getMediaUrl(mediaItem.filePath + "?download=true");
       const a = document.createElement('a');
       a.href = url;
-      a.download = mediaItem.filePath.split('/').pop();
+      a.download = mediaItem.filePath.split('/').pop() || 'media';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -87,7 +115,7 @@ const MediaGallery = ({ isDarkMode }) => {
     }
   };
 
-  const openViewer = (mediaItem) => {
+  const openViewer = (mediaItem: MediaItem) => {
     setSelectedMedia(mediaItem);
     setViewerOpen(true);
   };
@@ -97,12 +125,12 @@ const MediaGallery = ({ isDarkMode }) => {
     setSelectedMedia(null);
   };
 
-  const getGameTitle = (titleId) => {
+  const getGameTitle = (titleId?: string): string => {
     if (!titleId) return "Unknown";
     return titles[titleId] || "Deleted Games and Apps";
   };
 
-  const getFilteredMedia = () => {
+  const getFilteredMedia = (): MediaItem[] => {
     let filtered = [...media];
     
     // Apply type filter
@@ -121,16 +149,16 @@ const MediaGallery = ({ isDarkMode }) => {
     
     // Apply sorting
     if (sort === "date-desc") {
-      filtered.sort((a, b) => b.date - a.date);
+      filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
     } else if (sort === "date-asc") {
-      filtered.sort((a, b) => a.date - b.date);
+      filtered.sort((a, b) => a.date.getTime() - b.date.getTime());
     }
     
     return filtered;
   };
 
-  const getGamesList = () => {
-    const games = new Set();
+  const getGamesList = (): string[] => {
+    const games = new Set<string>();
     media.forEach(item => {
       if (item.titleId) {
         games.add(item.titleId);
@@ -142,7 +170,7 @@ const MediaGallery = ({ isDarkMode }) => {
   const filteredMedia = getFilteredMedia();
   const gamesList = getGamesList();
 
-  const formatDuration = (duration) => {
+  const formatDuration = (duration: number | null): string => {
     if (!duration) return "";
     
     const totalSeconds = Math.floor(duration / 1000);
@@ -164,7 +192,7 @@ const MediaGallery = ({ isDarkMode }) => {
           <label>Filter:</label>
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => setFilter((e.target as HTMLSelectElement).value)}
             className="filter-select"
           >
             <option value="all">All Media</option>
@@ -178,7 +206,7 @@ const MediaGallery = ({ isDarkMode }) => {
           <label>Game:</label>
           <select
             value={gameFilter}
-            onChange={(e) => setGameFilter(e.target.value)}
+            onChange={(e) => setGameFilter((e.target as HTMLSelectElement).value)}
             className="filter-select"
           >
             <option value="all">All Games</option>
@@ -194,7 +222,7 @@ const MediaGallery = ({ isDarkMode }) => {
           <label>Sort:</label>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => setSort((e.target as HTMLSelectElement).value)}
             className="filter-select"
           >
             <option value="date-desc">Newest First</option>
@@ -326,3 +354,4 @@ const MediaGallery = ({ isDarkMode }) => {
 };
 
 export default MediaGallery;
+

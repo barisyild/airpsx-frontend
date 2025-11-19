@@ -1,7 +1,25 @@
-import { h } from "preact";
+import { h, ComponentChildren } from "preact";
 import { useState, useRef, useEffect } from "preact/hooks";
 import "./Window.css";
-import IconService from "../../services/IconService";
+
+interface WindowProps {
+  window: {
+    id: string | number;
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+    minimized: boolean;
+    icon: string;
+    title: string;
+    app: string;
+  };
+  children: ComponentChildren;
+  isActive: boolean;
+  isDarkMode: boolean;
+  onClose: () => void;
+  onFocus: () => void;
+  onDragStart: () => void;
+  onMinimize: () => void;
+}
 
 const Window = ({
   window,
@@ -12,7 +30,7 @@ const Window = ({
   onFocus,
   onDragStart,
   onMinimize,
-}) => {
+}: WindowProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -23,17 +41,18 @@ const Window = ({
     height: 0,
   });
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const windowRef = useRef(null);
+  const windowRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
   }, []);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = (e: TouchEvent) => {
+    const target = e.target as HTMLElement;
     if (
-      e.target.closest(".window-header") &&
-      !e.target.closest(".window-controls")
+      target.closest(".window-header") &&
+      !target.closest(".window-controls")
     ) {
       const touch = e.touches[0];
       touchStartRef.current = {
@@ -42,7 +61,7 @@ const Window = ({
       };
       setIsDragging(true);
       onDragStart();
-      const rect = windowRef.current.getBoundingClientRect();
+      const rect = windowRef.current!.getBoundingClientRect();
       setDragOffset({
         x: touch.clientX - rect.left,
         y: touch.clientY - rect.top,
@@ -50,12 +69,12 @@ const Window = ({
     }
   };
 
-  const handleTouchMove = (e) => {
-    if (isDragging) {
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging && windowRef.current) {
       const touch = e.touches[0];
       const rect = windowRef.current.getBoundingClientRect();
       const desktopRect = document
-        .querySelector(".desktop-content")
+        .querySelector(".desktop-content")!
         .getBoundingClientRect();
 
       let x = touch.clientX - dragOffset.x;
@@ -73,14 +92,15 @@ const Window = ({
     setIsResizing(false);
   };
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
     if (
-      e.target.closest(".window-header") &&
-      !e.target.closest(".window-controls")
+      target.closest(".window-header") &&
+      !target.closest(".window-controls")
     ) {
       setIsDragging(true);
       onDragStart();
-      const rect = windowRef.current.getBoundingClientRect();
+      const rect = windowRef.current!.getBoundingClientRect();
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
@@ -88,10 +108,10 @@ const Window = ({
     }
   };
 
-  const handleResizeMouseDown = (e) => {
+  const handleResizeMouseDown = (e: MouseEvent) => {
     e.stopPropagation();
     setIsResizing(true);
-    const rect = windowRef.current.getBoundingClientRect();
+    const rect = windowRef.current!.getBoundingClientRect();
     setResizeStart({
       x: e.clientX,
       y: e.clientY,
@@ -100,7 +120,9 @@ const Window = ({
     });
   };
 
-  const constrainWindow = (rect, desktopRect) => {
+  const constrainWindow = (rect: DOMRect, desktopRect: DOMRect) => {
+    if (!windowRef.current) return;
+    
     let x = parseInt(windowRef.current.style.left);
     let y = parseInt(windowRef.current.style.top);
     let width = rect.width;
@@ -124,11 +146,14 @@ const Window = ({
   };
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!windowRef.current) return;
+      
       const rect = windowRef.current.getBoundingClientRect();
-      const desktopRect = document
-        .querySelector(".desktop-content")
-        .getBoundingClientRect();
+      const desktopContent = document.querySelector(".desktop-content");
+      if (!desktopContent) return;
+      
+      const desktopRect = desktopContent.getBoundingClientRect();
 
       if (isDragging) {
         let x = e.clientX - dragOffset.x;
@@ -209,11 +234,11 @@ const Window = ({
         display: window.minimized ? "none" : "flex",
       }}
       onMouseDown={onFocus}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
+      onTouchStart={handleTouchStart as any}
+      onTouchMove={handleTouchMove as any}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="window-header" onMouseDown={handleMouseDown}>
+      <div className="window-header" onMouseDown={handleMouseDown as any}>
         <div className="window-title">
           <span className="window-icon icon">
             {window.icon}
@@ -247,7 +272,7 @@ const Window = ({
       {!isTouchDevice && (
         <div
           className="window-resize"
-          onMouseDown={handleResizeMouseDown}
+          onMouseDown={handleResizeMouseDown as any}
         ></div>
       )}
     </div>
@@ -255,3 +280,4 @@ const Window = ({
 };
 
 export default Window;
+

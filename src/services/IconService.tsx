@@ -1,11 +1,11 @@
-import { h } from "preact";
+import { h, JSX } from "preact";
 import elfIcon from "../assets/elf-icon.svg";
 
 const IconService = {
-  getFileIcon: (type, name) => {
+  getFileIcon: (type: string, name: string): string | JSX.Element => {
     if (type === "folder") return "📁";
 
-    const extension = name.split(".").pop().toLowerCase();
+    const extension = name.split(".").pop()?.toLowerCase() || '';
 
     switch (extension) {
       // Documents
@@ -86,3 +86,4 @@ const IconService = {
 };
 
 export default IconService;
+

@@ -3,14 +3,33 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import "./SystemDetails.css";
 import ApiService from "../../services/ApiService";
 
-// Variable to store static system information
-let staticSystemDetails = null;
+interface SystemDetailsProps {
+  isDarkMode: boolean;
+  showPanel: boolean;
+  onClose: () => void;
+}
 
-const SystemDetails = ({ isDarkMode, showPanel, onClose }) => {
-  const [systemDetails, setSystemDetails] = useState(null);
-  const [error, setError] = useState(null);
+interface SystemDetailsData {
+  modelName: string;
+  serialNumber: string;
+  hw_model: string;
+  hw_machine: string;
+  ostype: string;
+  sdk_version: string;
+  ps4_sdk_version: string;
+  kernel_version: string;
+  upd_version: string;
+  kernel_boot_time: number;
+}
+
+// Variable to store static system information
+let staticSystemDetails: SystemDetailsData | null = null;
+
+const SystemDetails = ({ isDarkMode, showPanel, onClose }: SystemDetailsProps) => {
+  const [systemDetails, setSystemDetails] = useState<SystemDetailsData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const retryTimeoutRef = useRef(null);
+  const retryTimeoutRef = useRef<number | null>(null);
 
   const fetchSystemDetails = async () => {
     // If static data is already loaded, use it
@@ -25,14 +44,14 @@ const SystemDetails = ({ isDarkMode, showPanel, onClose }) => {
       staticSystemDetails = data;
       setSystemDetails(data);
       setError(null);
-      clearTimeout(retryTimeoutRef.current);
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
     } catch (error) {
       console.error("System bilgisi alınamadı:", error);
       setError("Failed to load system information");
 
       // In case of error, try again after 5 seconds
       if (showPanel) {
-        retryTimeoutRef.current = setTimeout(() => {
+        retryTimeoutRef.current = window.setTimeout(() => {
           setIsLoading(true);
           fetchSystemDetails();
         }, 5000);
@@ -58,7 +77,7 @@ const SystemDetails = ({ isDarkMode, showPanel, onClose }) => {
     };
   }, [showPanel]);
 
-  const formatUptime = (bootTime) => {
+  const formatUptime = (bootTime: number): string => {
     if (!bootTime) return "Unknown";
 
     const now = Math.floor(Date.now() / 1000);
@@ -160,3 +179,4 @@ const SystemDetails = ({ isDarkMode, showPanel, onClose }) => {
 };
 
 export default SystemDetails;
+

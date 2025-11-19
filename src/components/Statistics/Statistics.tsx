@@ -24,10 +24,29 @@ ChartJS.register(
   Legend
 );
 
-const Statistics = ({ isDarkMode }) => {
-  const [stats, setStats] = useState([]);
+interface StatisticsProps {
+  isDarkMode: boolean;
+}
+
+interface Stat {
+  timestamp: number;
+  frequency: number;
+  temperature: number;
+  socSensorTemperature: number;
+  titleID?: string;
+  titleName?: string;
+}
+
+interface Averages {
+  frequency: number;
+  temperature: number;
+  socTemp: number;
+}
+
+const Statistics = ({ isDarkMode }: StatisticsProps) => {
+  const [stats, setStats] = useState<Stat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -52,11 +71,11 @@ const Statistics = ({ isDarkMode }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const calculateAverages = (data) => {
+  const calculateAverages = (data: Stat[]): { game: Averages; idle: Averages } => {
     const gameStats = data.filter((stat) => stat.titleID);
     const idleStats = data.filter((stat) => !stat.titleID);
 
-    const calculateAvg = (arr) => ({
+    const calculateAvg = (arr: Stat[]): Averages => ({
       frequency:
         arr.reduce((sum, stat) => sum + stat.frequency, 0) /
         (arr.length || 1) /
@@ -120,7 +139,7 @@ const Statistics = ({ isDarkMode }) => {
     document.body.removeChild(link);
   };
 
-  const chartOptions = {
+  const chartOptions: any = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -264,3 +283,4 @@ const Statistics = ({ isDarkMode }) => {
 };
 
 export default Statistics;
+

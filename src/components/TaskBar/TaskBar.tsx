@@ -1,13 +1,27 @@
 import { h } from "preact";
 import "./TaskBar.css";
-import IconService from "../../services/IconService";
+
+interface WindowInfo {
+  id: string | number;
+  icon: string;
+  title: string;
+}
+
+interface TaskBarProps {
+  windows: WindowInfo[];
+  activeWindow: string | number | null;
+  isDarkMode: boolean;
+  onWindowClick: (id: string | number, isActive: boolean) => void;
+  onThemeToggle: () => void;
+}
+
 const TaskBar = ({
   windows,
   activeWindow,
   isDarkMode,
   onWindowClick,
   onThemeToggle,
-}) => {
+}: TaskBarProps) => {
   return (
     <div className={`taskbar ${isDarkMode ? "dark" : ""}`}>
       {" "}
@@ -36,4 +50,6 @@ const TaskBar = ({
     </div>
   );
 };
+
 export default TaskBar;
+

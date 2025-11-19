@@ -2,7 +2,14 @@ import { h } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import "./Toast.css";
 
-const Toast = ({ message, type = "info", duration = 3000, onClose }) => {
+interface ToastProps {
+  message: string;
+  type?: "info" | "success" | "error" | "warning";
+  duration?: number;
+  onClose?: () => void;
+}
+
+const Toast = ({ message, type = "info", duration = 3000, onClose }: ToastProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -32,4 +39,5 @@ const Toast = ({ message, type = "info", duration = 3000, onClose }) => {
   );
 };
 
-export default Toast; 
+export default Toast;
+

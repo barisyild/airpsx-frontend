@@ -3,12 +3,28 @@ import { useState, useEffect } from "preact/hooks";
 import ApiService from "../../services/ApiService";
 import "./Applications.css";
 
-const Applications = ({ isDarkMode }) => {
-  const [apps, setApps] = useState([]);
+interface ApplicationsProps {
+  isDarkMode: boolean;
+}
+
+interface App {
+  titleId: string;
+  titleName: string;
+  size: number;
+  installTime?: number;
+}
+
+interface RunStatus {
+  success: boolean;
+  message: string;
+}
+
+const Applications = ({ isDarkMode }: ApplicationsProps) => {
+  const [apps, setApps] = useState<App[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedApp, setSelectedApp] = useState(null);
-  const [runStatus, setRunStatus] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedApp, setSelectedApp] = useState<App | null>(null);
+  const [runStatus, setRunStatus] = useState<RunStatus | null>(null);
   const appTitleIdBlackList = [
       "NPXS40032",
       "NPXS40037",
@@ -32,8 +48,8 @@ const Applications = ({ isDarkMode }) => {
         const data = await ApiService.getAppList();
         // Sort by size and filter system apps
         const sortedApps = data
-          .filter(app => !appTitleIdBlackList.includes(app.titleId))
-          .sort((a, b) => b.size - a.size);
+          .filter((app: any) => !appTitleIdBlackList.includes(app.titleId))
+          .sort((a: any, b: any) => b.size - a.size);
         setApps(sortedApps);
         setError(null);
       } catch (err) {
@@ -47,11 +63,11 @@ const Applications = ({ isDarkMode }) => {
     fetchApps();
   }, []);
 
-  const handleAppClick = (app) => {
+  const handleAppClick = (app: App) => {
     setSelectedApp(app);
   };
 
-  const handleRunApp = async (titleId) => {
+  const handleRunApp = async (titleId: string) => {
     try {
       const result = await ApiService.runApp(titleId);
       setRunStatus(result);
@@ -88,9 +104,10 @@ const Applications = ({ isDarkMode }) => {
                     src={ApiService.getTitleImageUrl(app.titleId)}
                     alt={app.titleName}
                     onError={(e) => {
-                      e.target.src =
+                      const target = e.target as HTMLImageElement;
+                      target.src =
                         'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>';
-                      e.target.style.background = "#2c3e50";
+                      target.style.background = "#2c3e50";
                     }}
                   />
                 </div>
@@ -120,9 +137,10 @@ const Applications = ({ isDarkMode }) => {
                       src={ApiService.getTitleImageUrl(selectedApp.titleId)}
                       alt={selectedApp.titleName}
                       onError={(e) => {
-                        e.target.src =
+                        const target = e.target as HTMLImageElement;
+                        target.src =
                           'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>';
-                        e.target.style.background = "#2c3e50";
+                        target.style.background = "#2c3e50";
                       }}
                     />
                   </div>
@@ -180,3 +198,4 @@ const Applications = ({ isDarkMode }) => {
 };
 
 export default Applications;
+

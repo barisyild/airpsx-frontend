@@ -1,7 +1,12 @@
 import { h } from "preact";
 import "./Disclaimer.css";
 
-const Disclaimer = ({ onAccept, isDarkMode }) => {
+interface DisclaimerProps {
+  onAccept: () => void;
+  isDarkMode: boolean;
+}
+
+const Disclaimer = ({ onAccept, isDarkMode }: DisclaimerProps) => {
   return (
     <div className={`disclaimer-overlay ${isDarkMode ? 'dark' : ''}`}>
       <div className="disclaimer-modal">
@@ -24,4 +29,5 @@ const Disclaimer = ({ onAccept, isDarkMode }) => {
   );
 };
 
-export default Disclaimer; 
+export default Disclaimer;
+

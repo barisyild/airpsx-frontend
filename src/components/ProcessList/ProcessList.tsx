@@ -3,14 +3,36 @@ import { useState, useEffect } from "preact/hooks";
 import ApiService from "../../services/ApiService";
 import "./ProcessList.css";
 
-const ProcessList = ({ isDarkMode }) => {
-  const [processes, setProcesses] = useState([]);
+interface ProcessListProps {
+  isDarkMode: boolean;
+}
+
+interface Process {
+  pid: number;
+  comm: string;
+  ppid: number;
+  rssize: number;
+  pageSize: number;
+  stat: string;
+  start: number;
+  emul: string;
+  titleID?: string;
+  [key: string]: any;
+}
+
+interface SortConfig {
+  key: keyof Process;
+  direction: "asc" | "desc";
+}
+
+const ProcessList = ({ isDarkMode }: ProcessListProps) => {
+  const [processes, setProcesses] = useState<Process[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [updatedFields, setUpdatedFields] = useState(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [updatedFields, setUpdatedFields] = useState<Set<string>>(new Set());
   const [lastUpdateFailed, setLastUpdateFailed] = useState(false);
-  const [lastUpdateTime, setLastUpdateTime] = useState(null);
-  const [sortConfig, setSortConfig] = useState({
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "pid",
     direction: "asc",
   });
@@ -34,16 +56,16 @@ const ProcessList = ({ isDarkMode }) => {
         }
 
         // Mevcut process'leri pid'ye göre map'le
-        const currentProcessMap = processes.reduce((acc, process) => {
+        const currentProcessMap: Record<number, Process> = processes.reduce((acc, process) => {
           acc[process.pid] = process;
           return acc;
-        }, {});
+        }, {} as Record<number, Process>);
 
         // Follow the changes
-        const changed = new Set();
+        const changed = new Set<string>();
 
         // Create new process list
-        const updatedProcesses = data.map((newProcess) => {
+        const updatedProcesses = data.map((newProcess: Process) => {
           const existingProcess = currentProcessMap[newProcess.pid];
 
           if (existingProcess) {
@@ -86,19 +108,19 @@ const ProcessList = ({ isDarkMode }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const requestSort = (key) => {
-    let direction = "asc";
+  const requestSort = (key: keyof Process) => {
+    let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
     setSortConfig({ key, direction });
   };
 
-  const getSortedProcesses = () => {
+  const getSortedProcesses = (): Process[] => {
     const sortedProcesses = [...processes];
     sortedProcesses.sort((a, b) => {
-      let aValue = a[sortConfig.key];
-      let bValue = b[sortConfig.key];
+      let aValue: any = a[sortConfig.key];
+      let bValue: any = b[sortConfig.key];
 
       // Special sorting rules
       if (sortConfig.key === "rssize") {
@@ -117,14 +139,14 @@ const ProcessList = ({ isDarkMode }) => {
     return sortedProcesses;
   };
 
-  const formatMemory = (size) => {
+  const formatMemory = (size: number): string => {
     // pageSize multiplied by rssize gives the actual memory usage
     const bytes = size * 16384; // pageSize fixed 16384
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(1)} MB`;
   };
 
-  const formatUptime = (startTime) => {
+  const formatUptime = (startTime: number): string => {
     if (!startTime) return "--:--:--";
 
     const now = Math.floor(Date.now() / 1000);
@@ -134,12 +156,12 @@ const ProcessList = ({ isDarkMode }) => {
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = uptime % 60;
 
-    const pad = (num) => String(num).padStart(2, "0");
+    const pad = (num: number) => String(num).padStart(2, "0");
 
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
-  const getValueClassName = (type, pid) => {
+  const getValueClassName = (type: string, pid: number): string => {
     const key = `${type}-${pid}`;
     return updatedFields.has(key) ? "updated" : "";
   };
@@ -221,3 +243,4 @@ const ProcessList = ({ isDarkMode }) => {
 };
 
 export default ProcessList;
+

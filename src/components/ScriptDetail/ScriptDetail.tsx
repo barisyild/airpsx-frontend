@@ -3,15 +3,32 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import ApiService from "../../services/ApiService";
 import "./ScriptDetail.css";
 
-const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc }) => {
+interface ScriptDetailProps {
+  isDarkMode: boolean;
+  scriptKey: string;
+  scriptName: string;
+  authorName: string;
+  authorSrc: string;
+}
+
+interface ScriptInfo {
+  key: string;
+  name: string;
+  authorName: string;
+  authorSrc: string;
+  description: string;
+  type: string;
+}
+
+const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc }: ScriptDetailProps) => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [output, setOutput] = useState("");
-  const [error, setError] = useState(null);
-  const [scriptInfo, setScriptInfo] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [scriptInfo, setScriptInfo] = useState<ScriptInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const outputRef = useRef(null);
-  const heartbeatIntervalRef = useRef(null);
+  const outputRef = useRef<HTMLDivElement>(null);
+  const heartbeatIntervalRef = useRef<number | null>(null);
 
   // Script hakkında daha fazla bilgi almak için ilk yükleme
   useEffect(() => {
@@ -21,7 +38,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
         
         // Fetch script details from the API
         const scripts = await ApiService.getRemoteScripts();
-        const currentScript = scripts.find(script => script.key === scriptKey);
+        const currentScript = scripts.find((script: any) => script.key === scriptKey);
         
         if (currentScript) {
           setScriptInfo({
@@ -81,7 +98,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
       setError(null);
 
       // Heartbeat interval'ini başlat
-      heartbeatIntervalRef.current = setInterval(async () => {
+      heartbeatIntervalRef.current = window.setInterval(async () => {
         try {
           await ApiService.sendHeartbeat();
         } catch (err) {
@@ -111,7 +128,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
       }
     } catch (err) {
       console.error("Script execution failed:", err);
-      setError(err.message || "Script execution failed");
+      setError((err as Error).message || "Script execution failed");
       
       // Hata durumunda interval'i temizle
       if (heartbeatIntervalRef.current) {
@@ -130,7 +147,7 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
   };
 
   // Function to determine if the description is long enough to need a "Show More" button
-  const isDescriptionLong = (description) => {
+  const isDescriptionLong = (description: string): boolean => {
     if (!description) return false;
     const lines = description.split('\n');
     return lines.length > 3;
@@ -282,3 +299,4 @@ const ScriptDetail = ({ isDarkMode, scriptKey, scriptName, authorName, authorSrc
 };
 
 export default ScriptDetail;
+

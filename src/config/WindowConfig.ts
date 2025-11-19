@@ -1,3 +1,4 @@
+import { ComponentType } from 'preact';
 import Applications from "../components/Applications/Applications";
 import FileManager from "../components/FileManager/FileManager";
 import MediaGallery from "../components/MediaGallery/MediaGallery";
@@ -12,8 +13,33 @@ import ScriptDetail from "../components/ScriptDetail/ScriptDetail";
 import Statistics from "../components/Statistics/Statistics";
 import SystemDetails from "../components/SystemDetails/SystemDetails";
 
+export interface WindowConfigItem {
+  id: string;
+  title: string;
+  icon: string;
+  defaultWidth: number;
+  defaultHeight: number;
+  minWidth: number;
+  minHeight: number;
+  visible?: boolean;
+  component: ComponentType<any>;
+}
+
+export interface WindowsMap {
+  [key: string]: WindowConfigItem;
+}
+
+export interface DesktopItem {
+  id: number;
+  name: string;
+  type: string;
+  app: string;
+  icon: string;
+  url?: string;
+}
+
 class WindowConfig {
-  static windows = {
+  static windows: WindowsMap = {
     fileManager: {
       id: 'fileManager',
       title: 'File Manager',
@@ -149,11 +175,11 @@ class WindowConfig {
     }
   };
 
-  static getConfig(windowId) {
+  static getConfig(windowId: string): WindowConfigItem | undefined {
     return this.windows[windowId];
   }
 
-  static getDesktopItems() {
+  static getDesktopItems(): DesktopItem[] {
     return [
       ...Object.values(this.windows).filter(config => config.visible !== false).map((config, index) => ({
         id: index + 1,
@@ -173,9 +199,10 @@ class WindowConfig {
     ];
   }
 
-  static getComponent(windowId) {
+  static getComponent(windowId: string): ComponentType<any> | undefined {
     return this.windows[windowId]?.component;
   }
 }
 
-export default WindowConfig; 
+export default WindowConfig;
+

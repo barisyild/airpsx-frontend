@@ -3,11 +3,20 @@ import { useState, useEffect } from "preact/hooks";
 import ApiService from "../../services/ApiService";
 import "./Profiles.css";
 
-const Profiles = ({ isDarkMode }) => {
-  const [profiles, setProfiles] = useState([]);
+interface ProfilesProps {
+  isDarkMode: boolean;
+}
+
+interface Profile {
+  profileId: string;
+  username: string;
+}
+
+const Profiles = ({ isDarkMode }: ProfilesProps) => {
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -26,11 +35,11 @@ const Profiles = ({ isDarkMode }) => {
     fetchProfiles();
   }, []);
 
-  const handleProfileClick = (profile) => {
+  const handleProfileClick = (profile: Profile) => {
     setSelectedProfile(profile);
   };
 
-  const handleBackup = async (profileId = null) => {
+  const handleBackup = async (profileId: string | null = null) => {
     try {
       await ApiService.downloadBackup(profileId);
     } catch (error) {
@@ -68,9 +77,10 @@ const Profiles = ({ isDarkMode }) => {
                     src={ApiService.getProfileImageUrl(profile.profileId)}
                     alt={profile.username}
                     onError={(e) => {
-                      e.target.src =
+                      const target = e.target as HTMLImageElement;
+                      target.src =
                         'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>';
-                      e.target.style.background = "#2c3e50";
+                      target.style.background = "#2c3e50";
                     }}
                   />
                 </div>
@@ -100,9 +110,10 @@ const Profiles = ({ isDarkMode }) => {
                       )}
                       alt={selectedProfile.username}
                       onError={(e) => {
-                        e.target.src =
+                        const target = e.target as HTMLImageElement;
+                        target.src =
                           'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>';
-                        e.target.style.background = "#2c3e50";
+                        target.style.background = "#2c3e50";
                       }}
                     />
                   </div>
@@ -135,3 +146,4 @@ const Profiles = ({ isDarkMode }) => {
 };
 
 export default Profiles;
+

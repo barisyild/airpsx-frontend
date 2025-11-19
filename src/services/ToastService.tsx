@@ -1,12 +1,19 @@
 import { h, render } from "preact";
 import Toast from "../components/Toast/Toast";
 
-class ToastService {
-  static container = null;
-  static toasts = [];
-  static nextId = 1;
+interface ToastItem {
+  id: number;
+  message: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+  duration: number;
+}
 
-  static init() {
+class ToastService {
+  static container: HTMLDivElement | null = null;
+  static toasts: ToastItem[] = [];
+  static nextId: number = 1;
+
+  static init(): void {
     // Toast container'ı oluştur
     if (!this.container) {
       this.container = document.createElement('div');
@@ -16,7 +23,7 @@ class ToastService {
     }
   }
 
-  static show(message, type = "info", duration = 3000) {
+  static show(message: string, type: 'info' | 'success' | 'error' | 'warning' = "info", duration: number = 3000): number {
     this.init();
     
     const id = this.nextId++;
@@ -26,28 +33,28 @@ class ToastService {
     return id;
   }
 
-  static success(message, duration = 3000) {
+  static success(message: string, duration: number = 3000): number {
     return this.show(message, "success", duration);
   }
 
-  static error(message, duration = 3000) {
+  static error(message: string, duration: number = 3000): number {
     return this.show(message, "error", duration);
   }
 
-  static warning(message, duration = 3000) {
+  static warning(message: string, duration: number = 3000): number {
     return this.show(message, "warning", duration);
   }
 
-  static info(message, duration = 3000) {
+  static info(message: string, duration: number = 3000): number {
     return this.show(message, "info", duration);
   }
 
-  static dismiss(id) {
+  static dismiss(id: number): void {
     this.toasts = this.toasts.filter(toast => toast.id !== id);
     this.render();
   }
 
-  static render() {
+  static render(): void {
     if (!this.container) return;
 
     // Dark mode check
@@ -78,4 +85,5 @@ class ToastService {
   }
 }
 
-export default ToastService; 
+export default ToastService;
+

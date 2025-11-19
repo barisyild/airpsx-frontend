@@ -1,6 +1,7 @@
 import { h } from "preact";
 import Desktop from "./components/Desktop/Desktop";
 import "./style.css";
+
 export function App() {
   if (navigator.userAgent.includes("PlayStation 4")) {
     document.body.classList.add('ps4');
@@ -10,3 +11,4 @@ export function App() {
 
   return <Desktop />;
 }
+

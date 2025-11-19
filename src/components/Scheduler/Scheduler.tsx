@@ -9,7 +9,46 @@ import "codemirror/mode/haxe/haxe";
 import ApiService from "../../services/ApiService";
 import "./Scheduler.css";
 
-const FREQUENCY_OPTIONS = [
+interface SchedulerProps {
+  isDarkMode: boolean;
+  language?: string;
+}
+
+interface FrequencyOption {
+  label: string;
+  value: number;
+}
+
+interface Task {
+  id: number;
+  name: string;
+  enabled: boolean;
+  frequency: number;
+  lastRun?: string;
+  status?: number;
+  script?: string;
+  type?: string;
+  output?: string;
+  logContent?: string;
+  createdAt?: string;
+  success?: number;
+  failed?: number;
+  logs?: boolean;
+}
+
+interface Translations {
+  [key: string]: {
+    currentMode: string;
+    switchToRuleScript: string;
+    switchToLua: string;
+    placeholder: {
+      rulescript: string;
+      lua: string;
+    };
+  };
+}
+
+const FREQUENCY_OPTIONS: FrequencyOption[] = [
   { label: "1 Minute", value: 60 },
   { label: "5 Minutes", value: 300 },
   { label: "15 Minutes", value: 900 },
@@ -22,7 +61,7 @@ const FREQUENCY_OPTIONS = [
   { label: "1 Week", value: 604800 }
 ];
 
-const translations = {
+const translations: Translations = {
   en: {
     currentMode: "Current mode:",
     switchToRuleScript: "Switch to RuleScript",
@@ -34,28 +73,28 @@ const translations = {
   },
 };
 
-const Scheduler = ({ isDarkMode, language = "en" }) => {
-  const [tasks, setTasks] = useState([]);
-  const [selectedTask, setSelectedTask] = useState(null);
+const Scheduler = ({ isDarkMode, language = "en" }: SchedulerProps) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const editorRef = useRef(null);
-  const cmRef = useRef(null);
+  const [error, setError] = useState<string | null>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const cmRef = useRef<CodeMirror.EditorFromTextArea | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [currentScript, setCurrentScript] = useState('');
   const [showLogs, setShowLogs] = useState(false);
-  const [runningTask, setRunningTask] = useState(null);
+  const [runningTask, setRunningTask] = useState<Task | null>(null);
   const [scriptMode, setScriptMode] = useState("rulescript"); // Default to rulescript
   const t = translations[language] || translations.en;
 
   // Sample templates for each language
-  const templates = {
+  const templates: Record<string, string> = {
     rulescript: '',
     lua: ''
   };
 
-  const switchLanguage = (newMode) => {
+  const switchLanguage = (newMode: string) => {
     if (newMode === scriptMode) return;
     
     // No need to ask for confirmation or reset script content
@@ -70,7 +109,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
       else
         cmRef.current.setOption("mode", newMode);
 
-      cmRef.current.setOption("placeholder", t.placeholder[newMode]);
+      cmRef.current.setOption("placeholder", t.placeholder[newMode as keyof typeof t.placeholder]);
     }
     
     // If a task is selected, update it with the new script type but keep the same content
@@ -79,19 +118,13 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     }
   };
   
-  const updateTaskWithNewMode = async (newMode, script) => {
+  const updateTaskWithNewMode = async (newMode: string, script: string) => {
+    if (!selectedTask) return;
+    
     try {
       await ApiService.updateTask(selectedTask.id, {
         type: newMode
       });
-      
-      // Comment out the setSelectedTask to avoid showing output message
-      /*setSelectedTask(prev => ({
-        ...prev, 
-        script: script,
-        type: newMode,
-        output: `Switched to ${newMode === 'rulescript' ? 'RuleScript' : 'Lua'} mode`
-      }));*/
       
       setTasks(tasks.map(task => 
         task.id === selectedTask.id ? {
@@ -102,10 +135,10 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
       ));
     } catch (err) {
       console.error("Script type update failed:", err);
-      setSelectedTask(prev => ({ 
+      setSelectedTask(prev => prev ? { 
         ...prev, 
-        output: `Error updating script type: ${err.message}`
-      }));
+        output: `Error updating script type: ${(err as Error).message}`
+      } : null);
     }
   };
 
@@ -122,7 +155,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     }
   };
 
-  const fetchTaskDetail = async (id) => {
+  const fetchTaskDetail = async (id: number) => {
     try {
       if (selectedTask && currentScript !== selectedTask.script) {
         if (!window.confirm('You have unsaved changes. Do you want to discard them?')) {
@@ -143,38 +176,38 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     }
   };
 
-  const handleEnabledChange = async (taskId, enabled) => {
+  const handleEnabledChange = async (taskId: number, enabled: boolean) => {
     try {
       await ApiService.updateTask(taskId, { enabled });
       
-      setSelectedTask(prev => ({
+      setSelectedTask(prev => prev ? {
         ...prev,
         enabled,
         script: currentScript
-      }));
+      } : null);
       setTasks(tasks.map(task => 
         task.id === taskId ? {...task, enabled} : task
       ));
     } catch (err) {
       console.error("Task enable/disable edilemedi:", err);
-      setSelectedTask(prev => ({ 
+      setSelectedTask(prev => prev ? { 
         ...prev, 
         enabled: !enabled,
         script: currentScript
-      }));
+      } : null);
     }
   };
 
-  const handleFrequencyChange = async (taskId, newFrequency) => {
+  const handleFrequencyChange = async (taskId: number, newFrequency: string) => {
     try {
       const frequency = parseInt(newFrequency);
       await ApiService.updateTask(taskId, { frequency });
       
-      setSelectedTask(prev => ({
+      setSelectedTask(prev => prev ? {
         ...prev,
         frequency,
         script: currentScript
-      }));
+      } : null);
       setTasks(tasks.map(task => 
         task.id === taskId ? {...task, frequency} : task
       ));
@@ -183,29 +216,29 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     }
   };
 
-  const handleLogsChange = async (taskId, logs) => {
+  const handleLogsChange = async (taskId: number, logs: boolean) => {
     try {
       await ApiService.updateTask(taskId, { logs });
       
-      setSelectedTask(prev => ({
+      setSelectedTask(prev => prev ? {
         ...prev,
         logs,
         script: currentScript
-      }));
+      } : null);
       setTasks(tasks.map(task => 
         task.id === taskId ? {...task, logs} : task
       ));
     } catch (err) {
       console.error("Log ayarı güncellenemedi:", err);
-      setSelectedTask(prev => ({ 
+      setSelectedTask(prev => prev ? { 
         ...prev, 
         logs: !logs,
         script: currentScript
-      }));
+      } : null);
     }
   };
 
-  const getFrequencyLabel = (seconds) => {
+  const getFrequencyLabel = (seconds: number): string => {
     const option = FREQUENCY_OPTIONS.find(opt => opt.value === seconds);
     return option ? option.label : `${seconds} seconds`;
   };
@@ -242,14 +275,14 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
         indentWithTabs: true,
         readOnly: false,
         autofocus: true,
-        placeholder: t.placeholder[scriptMode],
+        placeholder: t.placeholder[scriptMode as keyof typeof t.placeholder],
       });
 
       // Update currentScript first, then set the editor
       setCurrentScript(selectedTask.script || '');
       cmRef.current.setValue(selectedTask.script || '');
 
-      const handleChange = (cm) => {
+      const handleChange = (cm: CodeMirror.Editor) => {
         const value = cm.getValue();
         setCurrentScript(value);
       };
@@ -266,46 +299,50 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     }
   }, [selectedTask, isDarkMode, scriptMode]);
 
-  const formatDate = (dateStr) => {
+  const formatDate = (dateStr?: string): string => {
     if (!dateStr) return "Never";
     return new Date(dateStr).toLocaleString();
   };
 
   const handleTryScript = async () => {
+    if (!selectedTask) return;
+    
     try {
       const script = currentScript; // Get from state instead of cmRef.current.getValue()
-      setSelectedTask(prev => ({ ...prev, output: '' }));
+      setSelectedTask(prev => prev ? { ...prev, output: '' } : null);
       
       await ApiService.executeScriptStream(script, (chunk) => {
-        setSelectedTask(prev => ({ 
+        setSelectedTask(prev => prev ? { 
           ...prev, 
           output: prev.output ? prev.output + chunk : chunk,
           script: currentScript // update script
-        }));
+        } : null);
       }, scriptMode); // Pass the current script mode to the API
     } catch (err) {
       console.error("Script çalıştırılamadı:", err);
-      setSelectedTask(prev => ({ 
+      setSelectedTask(prev => prev ? { 
         ...prev, 
-        output: `Error: ${err.message}`,
+        output: `Error: ${(err as Error).message}`,
         script: currentScript // update the script in case of error
-      }));
+      } : null);
     }
   };
 
   const handleSaveScript = async () => {
+    if (!selectedTask) return;
+    
     try {
       await ApiService.updateTask(selectedTask.id, { 
         script: currentScript,
         type: scriptMode // Save the script type with the task
       });
       
-      setSelectedTask(prev => ({
+      setSelectedTask(prev => prev ? {
         ...prev, 
         script: currentScript,
         type: scriptMode,
         output: 'Task saved successfully!'
-      }));
+      } : null);
       setTasks(tasks.map(task => 
         task.id === selectedTask.id ? {
           ...task, 
@@ -316,34 +353,37 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     } catch (err) {
       console.error("Script kaydedilemedi:", err);
       
-      let errorMessage = err.message;
+      let errorMessage = (err as Error).message;
       if (errorMessage.includes('rulescript:')) {
         errorMessage = errorMessage.split('\n')[0]
           .replace('rulescript:', 'Line ')
           .replace('Unexpected token:', 'Syntax error:');
       }
       
-      setSelectedTask(prev => ({ 
+      setSelectedTask(prev => prev ? { 
         ...prev, 
         output: `Error saving task: ${errorMessage}`
-      }));
+      } : null);
     }
   };
 
   const handleNameEdit = () => {
+    if (!selectedTask) return;
     setEditedName(selectedTask.name);
     setIsEditingName(true);
   };
 
   const handleNameSave = async () => {
+    if (!selectedTask) return;
+    
     try {
       await ApiService.updateTask(selectedTask.id, { name: editedName });
       
-      setSelectedTask(prev => ({
+      setSelectedTask(prev => prev ? {
         ...prev,
         name: editedName,
         script: currentScript
-      }));
+      } : null);
       setTasks(tasks.map(task => 
         task.id === selectedTask.id ? {...task, name: editedName} : task
       ));
@@ -372,7 +412,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     }
   };
 
-  const handleDeleteTask = async (taskId, e) => {
+  const handleDeleteTask = async (taskId: number, e: Event) => {
     e.stopPropagation();
     
     if (!window.confirm('Are you sure you want to delete this task?')) {
@@ -393,7 +433,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
       }
     } catch (err) {
       console.error("Task silinemedi:", err);
-      alert('Failed to delete task: ' + err.message);
+      alert('Failed to delete task: ' + (err as Error).message);
     }
   };
 
@@ -402,38 +442,46 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
     
     try {
       setShowLogs(true);
-      setSelectedTask(prev => ({ 
+      setSelectedTask(prev => prev ? { 
         ...prev, 
         logContent: '',
         output: prev.output // Keep current output
-      }));
+      } : null);
       
       await ApiService.streamTaskLog(selectedTask.id, (chunk) => {
-        setSelectedTask(prev => ({ 
+        setSelectedTask(prev => prev ? { 
           ...prev, 
           logContent: (prev.logContent || '') + chunk
-        }));
+        } : null);
       });
     } catch (err) {
       console.error("Loglar alınamadı:", err);
-      setSelectedTask(prev => ({ 
+      setSelectedTask(prev => prev ? { 
         ...prev, 
-        logContent: `Error loading logs: ${err.message}`
-      }));
+        logContent: `Error loading logs: ${(err as Error).message}`
+      } : null);
     }
   };
 
   const pollTaskStatus = async () => {
     try {
-      const taskStatuses = await ApiService.getTaskStatus();
+      const response = await ApiService.getTaskStatus();
+      
+      // Debug: log what we received
+      if (!Array.isArray(response)) {
+        console.warn('getTaskStatus returned non-array:', response);
+      }
+      
+      // Make sure response is an array
+      const taskStatuses = Array.isArray(response) ? response : [];
       
       // Find the running task (with status 1)
-      const runningTask = taskStatuses.find(task => task.status === 1);
+      const runningTask = taskStatuses.find((task: any) => task.status === 1);
       setRunningTask(runningTask || null);
       
       // Update the last runtime of all tasks
       setTasks(prevTasks => prevTasks.map(task => {
-        const statusInfo = taskStatuses.find(s => s.id === task.id);
+        const statusInfo = taskStatuses.find((s: any) => s.id === task.id);
         if (statusInfo) {
           return {
             ...task,
@@ -446,14 +494,14 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
       
       // Update the information of the selected task
       if (selectedTask) {
-        const selectedStatusInfo = taskStatuses.find(s => s.id === selectedTask.id);
+        const selectedStatusInfo = taskStatuses.find((s: any) => s.id === selectedTask.id);
         if (selectedStatusInfo) {
-          setSelectedTask(prev => ({
+          setSelectedTask(prev => prev ? {
             ...prev,
             lastRun: selectedStatusInfo.lastRun,
             status: selectedStatusInfo.status,
             script: currentScript // Important: protect the script
-          }));
+          } : null);
         }
       }
       
@@ -543,7 +591,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
                   <input
                     type="text"
                     value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
+                    onChange={(e) => setEditedName((e.target as HTMLInputElement).value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleNameSave();
                       if (e.key === 'Escape') setIsEditingName(false);
@@ -607,7 +655,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
                     <h3>Output</h3>
                     <button 
                       className="close-output"
-                      onClick={() => setSelectedTask(prev => ({ ...prev, output: null }))}
+                      onClick={() => setSelectedTask(prev => prev ? { ...prev, output: undefined } : null)}
                     >
                       ×
                     </button>
@@ -623,7 +671,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
                       className="close-output"
                       onClick={() => {
                         setShowLogs(false);
-                        setSelectedTask(prev => ({ ...prev, logContent: null }));
+                        setSelectedTask(prev => prev ? { ...prev, logContent: undefined } : null);
                       }}
                     >
                       ×
@@ -653,7 +701,7 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
                 <select 
                   className="frequency-select"
                   value={selectedTask.frequency}
-                  onChange={(e) => handleFrequencyChange(selectedTask.id, e.target.value)}
+                  onChange={(e) => handleFrequencyChange(selectedTask.id, (e.target as HTMLSelectElement).value)}
                 >
                   {FREQUENCY_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -689,4 +737,5 @@ const Scheduler = ({ isDarkMode, language = "en" }) => {
   );
 };
 
-export default Scheduler; 
+export default Scheduler;
+

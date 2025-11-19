@@ -3,11 +3,22 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import "./ImageViewer.css";
 import ApiService from "../../services/ApiService";
 
-const ImageViewer = ({ imageFile, currentPath, onClose }) => {
+interface FileItem {
+  name: string;
+  [key: string]: any;
+}
+
+interface ImageViewerProps {
+  imageFile: FileItem | null;
+  currentPath: string;
+  onClose: () => void;
+}
+
+const ImageViewer = ({ imageFile, currentPath, onClose }: ImageViewerProps) => {
   const [loading, setLoading] = useState(true);
-  const imgRef = useRef(null);
-  const abortControllerRef = useRef(null);
-  const imageUrlRef = useRef('');
+  const imgRef = useRef<HTMLImageElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const imageUrlRef = useRef<string>('');
   
   // Generate the image URL only when the component is first loaded or when imageFile changes
   useEffect(() => {
@@ -95,4 +106,5 @@ const ImageViewer = ({ imageFile, currentPath, onClose }) => {
   );
 };
 
-export default ImageViewer; 
+export default ImageViewer;
+

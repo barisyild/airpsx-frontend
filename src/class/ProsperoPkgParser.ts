@@ -1,24 +1,65 @@
-export class ProsperoPkgParser {
-    #file;
-    #littleCache = null;
-    #entriesCache = null;
+interface ProsperoPkgHeader {
+    entryCount: number;
+    fileTableOffset: number;
+}
 
-    constructor(file) {
-        this.#file = file;           // Blob or File
+interface ProsperoPkgEntry {
+    type: number;
+    unk1: number;
+    flags1: number;
+    flags2: number;
+    offset: number;
+    size: number;
+    padding: Uint8Array;
+    keyIndex: number;
+    isEncrypted: boolean;
+}
+
+interface LocalizedParameter {
+    titleName: string;
+    [key: string]: any;
+}
+
+interface PlayGoJson {
+    localizedParameters: {
+        defaultLanguage: string;
+        [language: string]: string | LocalizedParameter;
+    };
+    titleId: string;
+    [key: string]: any;
+}
+
+interface ProsperoPkgSfo {
+    TITLE: string;
+    TITLE_ID: string;
+}
+
+interface ProsperoPkgParseResult {
+    icon: ArrayBuffer | null;
+    sfo: ProsperoPkgSfo;
+}
+
+export class ProsperoPkgParser {
+    private file: File;
+    private littleCache: number | null = null;
+    private entriesCache: ProsperoPkgEntry[] | null = null;
+
+    public constructor(file: File) {
+        this.file = file;           // Blob or File
     }
 
     // ===========================
     // LOW-LEVEL HELPERS
     // ===========================
 
-    async #readBuffer(offset, length) {
-        const end = Math.min(offset + length, this.#file.size);
-        const blob = this.#file.slice(offset, end);
+    private async readBuffer(offset: number, length: number): Promise<ArrayBuffer> {
+        const end = Math.min(offset + length, this.file.size);
+        const blob = this.file.slice(offset, end);
         return await blob.arrayBuffer();
     }
 
-    async #readView(offset, length) {
-        const buf = await this.#readBuffer(offset, length);
+    private async readView(offset: number, length: number): Promise<DataView> {
+        const buf = await this.readBuffer(offset, length);
         return new DataView(buf);
     }
 
@@ -26,14 +67,14 @@ export class ProsperoPkgParser {
     // STEP 1 — Little Endian Offset
     // ===========================
 
-    async readMainOffset() {
-        if (this.#littleCache) return this.#littleCache;
+    private async readMainOffset(): Promise<number> {
+        if (this.littleCache) return this.littleCache;
 
-        const view = await this.#readView(0x58, 8);
+        const view = await this.readView(0x58, 8);
         const offset = view.getBigInt64(0, true);   // little-endian
 
         const offNum = Number(offset);
-        this.#littleCache = offNum;
+        this.littleCache = offNum;
         return offNum;
     }
 
@@ -41,10 +82,10 @@ export class ProsperoPkgParser {
     // STEP 2 — BIG ENDIAN HEADER
     // ===========================
 
-    async readHeader() {
+    private async readHeader(): Promise<ProsperoPkgHeader> {
         const base = await this.readMainOffset();
 
-        const view = await this.#readView(base + 0x10, 0x10);
+        const view = await this.readView(base + 0x10, 0x10);
 
         // big-endian
         const entryCount      = view.getUint32(0x00, false);
@@ -57,8 +98,8 @@ export class ProsperoPkgParser {
     // ENTRY TABLE
     // ===========================
 
-    async readEntries() {
-        if (this.#entriesCache) return this.#entriesCache;
+    private async readEntries(): Promise<ProsperoPkgEntry[]> {
+        if (this.entriesCache) return this.entriesCache;
 
         const base = await this.readMainOffset();
         const hdr  = await this.readHeader();
@@ -66,8 +107,8 @@ export class ProsperoPkgParser {
         const entrySize = 0x20;
         const totalSize = hdr.entryCount * entrySize;
 
-        const view = await this.#readView(base + hdr.fileTableOffset, totalSize);
-        const entries = [];
+        const view = await this.readView(base + hdr.fileTableOffset, totalSize);
+        const entries: ProsperoPkgEntry[] = [];
 
         for (let i = 0; i < hdr.entryCount; i++) {
             const off = i * entrySize;
@@ -101,7 +142,7 @@ export class ProsperoPkgParser {
             });
         }
 
-        this.#entriesCache = entries;
+        this.entriesCache = entries;
         return entries;
     }
 
@@ -110,12 +151,12 @@ export class ProsperoPkgParser {
     // (only non-encrypted)
     // ===========================
 
-    async parsePkg() {
+    public async parsePkg(): Promise<ProsperoPkgParseResult> {
         const base = await this.readMainOffset();
         const entries = await this.readEntries();
 
-        var sfo = {TITLE: "", TITLE_ID: ""};
-        var icon = null;
+        const sfo: ProsperoPkgSfo = {TITLE: "", TITLE_ID: ""};
+        let icon: ArrayBuffer | null = null;
 
         for (const e of entries) {
             let readSize = e.size;
@@ -124,14 +165,15 @@ export class ProsperoPkgParser {
             }
 
             const absOffset = base + e.offset;
-            const buf = await this.#readBuffer(absOffset, readSize);
+            const buf = await this.readBuffer(absOffset, readSize);
             if (e.type === 8449) {
-                var json = JSON.parse(new TextDecoder().decode(buf));
+                const json = JSON.parse(new TextDecoder().decode(buf)) as PlayGoJson;
                 console.log(json);
 
-                var defaultLanguage = json.localizedParameters.defaultLanguage;
+                const defaultLanguage = json.localizedParameters.defaultLanguage;
+                const locParam = json.localizedParameters[defaultLanguage] as LocalizedParameter;
 
-                sfo.TITLE = json.localizedParameters[defaultLanguage].titleName;
+                sfo.TITLE = locParam.titleName;
                 sfo.TITLE_ID = json.titleId;
             } else if (e.type === 4608) {
                 // 4109
@@ -142,23 +184,5 @@ export class ProsperoPkgParser {
 
         return {icon: icon, sfo: sfo};
     }
-
-    // ===========================
-    // GET SINGLE FILE BY TYPE
-    // ===========================
-
-    async extractByType(typeId) {
-        const base = await this.readMainOffset();
-        const entries = await this.readEntries();
-
-        const e = entries.find(x => x.type === typeId);
-        if (!e || e.isEncrypted) return null;
-
-        let readSize = e.size;
-        if (readSize % 0x10 !== 0)
-            readSize += 0x10 - (readSize % 0x10);
-
-        const buf = await this.#readBuffer(base + e.offset, readSize);
-        return new Uint8Array(buf);
-    }
 }
+

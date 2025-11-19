@@ -3,13 +3,24 @@ import { useEffect, useState, useRef } from "preact/hooks";
 import "./MediaPlayer.css";
 import ApiService from "../../services/ApiService";
 
-const MediaPlayer = ({ mediaFile, currentPath, onClose }) => {
+interface FileItem {
+  name: string;
+  [key: string]: any;
+}
+
+interface MediaPlayerProps {
+  mediaFile: FileItem | null;
+  currentPath: string;
+  onClose: () => void;
+}
+
+const MediaPlayer = ({ mediaFile, currentPath, onClose }: MediaPlayerProps) => {
   const [loading, setLoading] = useState(true);
   const isAudioFile = isAudioFileType(mediaFile?.name);
-  const audioRef = useRef(null);
-  const videoRef = useRef(null);
-  const abortControllerRef = useRef(null);
-  const mediaUrlRef = useRef('');
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const mediaUrlRef = useRef<string>('');
 
   // Generate the media URL only when the component is first loaded or when mediaFile changes
   useEffect(() => {
@@ -50,7 +61,7 @@ const MediaPlayer = ({ mediaFile, currentPath, onClose }) => {
   }, [mediaFile, currentPath]);
 
   // Check if the file is an audio file
-  function isAudioFileType(fileName) {
+  function isAudioFileType(fileName: string | undefined): boolean {
     if (!fileName) return false;
     const audioExtensions = ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'];
     const lowerCaseFileName = fileName.toLowerCase();
@@ -135,4 +146,5 @@ const MediaPlayer = ({ mediaFile, currentPath, onClose }) => {
   );
 };
 
-export default MediaPlayer; 
+export default MediaPlayer;
+

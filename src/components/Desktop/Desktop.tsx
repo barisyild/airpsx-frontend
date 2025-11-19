@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import Window from "../Window/Window";
 import TaskBar from "../TaskBar/TaskBar";
 import SystemMonitor from "../SystemStatus/SystemStatus";
-import IconService from "../../services/IconService";
 import SystemDetails from "../SystemDetails/SystemDetails";
 import ApiService from "../../services/ApiService";
 import WindowConfig from "../../config/WindowConfig";
@@ -12,51 +11,107 @@ import Disclaimer from "../Disclaimer/Disclaimer";
 
 const isConsole = /PlayStation/i.test(navigator.userAgent);
 
-const Desktop = () => {
-  const [desktopItems] = useState(WindowConfig.getDesktopItems());
+interface DesktopItem {
+  id: number;
+  name: string;
+  type: string;
+  app: string;
+  icon: string;
+  url?: string;
+}
 
-  const [windows, setWindows] = useState([]);
-  const [activeWindow, setActiveWindow] = useState(null);
-  const [contextMenu, setContextMenu] = useState({
+interface WindowInstance {
+  id: number | string;
+  app: string;
+  title: string;
+  icon: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  minSize: { width: number; height: number };
+  minimized: boolean;
+  props: Record<string, any>;
+  customInstance?: boolean;
+}
+
+interface ContextMenuState {
+  show: boolean;
+  x: number;
+  y: number;
+  item: DesktopItem | null;
+  isBackground?: boolean;
+}
+
+interface LastClickTime {
+  id: number | null;
+  time: number;
+  clickCount: number;
+}
+
+interface StorageInfo {
+  name: string;
+  path: string;
+  used: number;
+  total: number;
+}
+
+interface PkgUploadStatus {
+  uploading: boolean;
+  progress: number;
+  error: string | null;
+  success: boolean;
+}
+
+interface UrlInstallStatus {
+  loading: boolean;
+  error: string | null;
+  success: boolean;
+}
+
+const Desktop = () => {
+  const [desktopItems] = useState<DesktopItem[]>(WindowConfig.getDesktopItems());
+
+  const [windows, setWindows] = useState<WindowInstance[]>([]);
+  const [activeWindow, setActiveWindow] = useState<number | string | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     show: false,
     x: 0,
     y: 0,
     item: null,
   });
-  const [isDarkMode, setIsDarkMode] = useState(() => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const savedTheme = localStorage.getItem("theme");
     return savedTheme ? savedTheme === "dark" : true;
   });
-  const [storage, setStorage] = useState([]);
-  const [storageError, setStorageError] = useState(null);
-  const [isStorageLoading, setIsStorageLoading] = useState(true);
-  const [language, setLanguage] = useState("tr");
-  const [lastClickTime, setLastClickTime] = useState({
+  const [storage, setStorage] = useState<StorageInfo[]>([]);
+  const [storageError, setStorageError] = useState<string | null>(null);
+  const [isStorageLoading, setIsStorageLoading] = useState<boolean>(true);
+  const [language, setLanguage] = useState<string>("tr");
+  const [lastClickTime, setLastClickTime] = useState<LastClickTime>({
     id: null,
     time: 0,
     clickCount: 0,
   });
-  const [selectedIcons, setSelectedIcons] = useState(new Set());
-  const [selectedIconIndex, setSelectedIconIndex] = useState(-1);
-  const [showSystemDetails, setShowSystemDetails] = useState(false);
-  const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => {
+  const [selectedIcons, setSelectedIcons] = useState<Set<number>>(new Set());
+  const [selectedIconIndex, setSelectedIconIndex] = useState<number>(-1);
+  const [showSystemDetails, setShowSystemDetails] = useState<boolean>(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState<boolean>(() => {
     return document.cookie.includes('disclaimerAccepted=true');
   });
-  const [pkgUploadStatus, setPkgUploadStatus] = useState({
+  const [pkgUploadStatus, setPkgUploadStatus] = useState<PkgUploadStatus>({
     uploading: false,
     progress: 0,
     error: null,
     success: false
   });
-  const [showUrlModal, setShowUrlModal] = useState(false);
-  const [packageUrl, setPackageUrl] = useState('');
-  const [urlInstallStatus, setUrlInstallStatus] = useState({
+  const [showUrlModal, setShowUrlModal] = useState<boolean>(false);
+  const [packageUrl, setPackageUrl] = useState<string>('');
+  const [urlInstallStatus, setUrlInstallStatus] = useState<UrlInstallStatus>({
     loading: false,
     error: null,
     success: false
   });
-  const dragTimeoutRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const dragTimeoutRef = useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     localStorage.setItem("theme", isDarkMode ? "dark" : "light");
@@ -81,13 +136,17 @@ const Desktop = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getStorageIcon = (name) => {
+  const getStorageIcon = (name: string): string => {
     if (name.includes("USB")) return "💽";
     if (name.includes("Disc")) return "💿";
     return "💾";
   };
 
-  const constrainWindowPosition = (position, size, desktopRect) => {
+  const constrainWindowPosition = (
+    position: { x: number; y: number },
+    size: { width: number; height: number },
+    desktopRect: DOMRect
+  ) => {
     let { x, y } = position;
     const { width, height } = size;
 
@@ -107,14 +166,14 @@ const Desktop = () => {
     };
   };
 
-  const openWindow = (app, customProps = {}, customTitle = null) => {
+  const openWindow = (app: string, customProps: Record<string, any> = {}, customTitle: string | null = null): number | string | void => {
     const config = WindowConfig.getConfig(app);
     if (!config) return;
 
     // If we received a custom window id, check for existing window with that id
     if (customProps.windowId && windows.some((w) => w.id === customProps.windowId)) {
       const existingWindow = windows.find((w) => w.id === customProps.windowId);
-      if (existingWindow.minimized) {
+      if (existingWindow && existingWindow.minimized) {
         setWindows(
           windows.map((w) =>
             w.id === existingWindow.id
@@ -123,14 +182,16 @@ const Desktop = () => {
           )
         );
       }
-      setActiveWindow(existingWindow.id);
+      if (existingWindow) {
+        setActiveWindow(existingWindow.id);
+      }
       return;
     }
 
     // If we don't have a custom window ID but the same type of window is already open
     if (!customProps.windowId && windows.some((w) => w.app === app && !w.customInstance)) {
       const existingWindow = windows.find((w) => w.app === app && !w.customInstance);
-      if (existingWindow.minimized) {
+      if (existingWindow && existingWindow.minimized) {
         setWindows(
           windows.map((w) =>
             w.id === existingWindow.id
@@ -139,7 +200,9 @@ const Desktop = () => {
           )
         );
       }
-      setActiveWindow(existingWindow.id);
+      if (existingWindow) {
+        setActiveWindow(existingWindow.id);
+      }
       return;
     }
 
@@ -150,7 +213,7 @@ const Desktop = () => {
       // Use customProps.windowId if provided, otherwise generate a new id
       const windowId = customProps.windowId || Date.now();
       
-      const newWindow = {
+      const newWindow: WindowInstance = {
         id: windowId,
         app: app,
         title: customTitle || config.title,
@@ -178,7 +241,7 @@ const Desktop = () => {
     }
   };
 
-  const closeWindow = (id) => {
+  const closeWindow = (id: number | string) => {
     setWindows(windows.filter((w) => w.id !== id));
     if (activeWindow === id) {
       setActiveWindow(null);
@@ -189,27 +252,27 @@ const Desktop = () => {
     setContextMenu({ ...contextMenu, show: false });
   };
 
-  const minimizeWindow = (id) => {
+  const minimizeWindow = (id: number | string) => {
     setWindows(
       windows.map((w) => (w.id === id ? { ...w, minimized: true } : w))
     );
   };
 
-  const handleDesktopContextMenu = (e) => {
+  const handleDesktopContextMenu = (e: MouseEvent) => {
     e.preventDefault();
 
     // Block if the clicked location is storage-panel or its children
-    if (e.target.closest(".storage-panel")) {
+    if ((e.target as HTMLElement).closest(".storage-panel")) {
       return;
     }
 
     // Block if the clicked location is a window or its children
-    if (e.target.closest(".window")) {
+    if ((e.target as HTMLElement).closest(".window")) {
       return;
     }
 
     // Show context menu only for desktop-icons or desktop-item
-    const clickedElement = e.target;
+    const clickedElement = e.target as HTMLElement;
     const isDesktopIcons = clickedElement.classList.contains("desktop-icons");
     const isDesktopItem = clickedElement.closest(".desktop-item");
 
@@ -222,7 +285,7 @@ const Desktop = () => {
       ? desktopItems.find(
           (item) =>
             item.name ===
-            isDesktopItem.querySelector(".desktop-item-name").textContent
+            (isDesktopItem.querySelector(".desktop-item-name") as HTMLElement)?.textContent
         )
       : null;
 
@@ -230,7 +293,7 @@ const Desktop = () => {
       show: true,
       x: e.pageX,
       y: e.pageY,
-      item,
+      item: item || null,
       isBackground: !isDesktopItem,
     });
   };
@@ -244,11 +307,11 @@ const Desktop = () => {
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       // If an input or textarea is in focus, handling keyboard events
       if (
-        document.activeElement.tagName === "INPUT" ||
-        document.activeElement.tagName === "TEXTAREA"
+        (document.activeElement as HTMLElement).tagName === "INPUT" ||
+        (document.activeElement as HTMLElement).tagName === "TEXTAREA"
       ) {
         return;
       }
@@ -258,7 +321,7 @@ const Desktop = () => {
       if (activeWindowElement) {
         // If an element in the active window is not in focus
         const activeWindowDom = document.querySelector(`[data-window-id="${activeWindow}"]`);
-        if (!activeWindowDom?.contains(document.activeElement)) {
+        if (activeWindowDom && !activeWindowDom.contains(document.activeElement)) {
           // Focus on the first focusable element in the window when Tab is pressed
           if (e.key === 'Tab') {
             e.preventDefault();
@@ -266,7 +329,7 @@ const Desktop = () => {
               'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
             );
             if (focusableElements.length > 0) {
-              focusableElements[0].focus();
+              (focusableElements[0] as HTMLElement).focus();
             }
           }
         }
@@ -351,7 +414,7 @@ const Desktop = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedIconIndex, desktopItems, windows, activeWindow]);
 
-  const handleDesktopItemClick = (e, item) => {
+  const handleDesktopItemClick = (e: MouseEvent, item: DesktopItem) => {
     const index = desktopItems.findIndex((i) => i.id === item.id);
     setSelectedIconIndex(index);
 
@@ -399,7 +462,7 @@ const Desktop = () => {
   };
 
   // Function to handle PKG file uploads
-  const handlePkgFileUpload = (file) => {
+  const handlePkgFileUpload = (file: File) => {
     if (file && file.name.toLowerCase().endsWith('.pkg')) {
       // If there's an active upload, stop it first
       if (pkgUploadStatus.uploading) {
@@ -526,7 +589,7 @@ const Desktop = () => {
           success: false
         });
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       setUrlInstallStatus({
         loading: false,
         error: error.message || 'Failed to install package from URL',
@@ -536,13 +599,14 @@ const Desktop = () => {
   };
 
   // Handle file input change
-  const handleFileInputChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileInputChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
     if (file) {
       handlePkgFileUpload(file);
     }
     // Reset file input so the same file can be selected again
-    e.target.value = '';
+    target.value = '';
   };
 
   return (
@@ -551,14 +615,14 @@ const Desktop = () => {
       onClick={(e) => {
         // Clear selection when clicked on empty field
         if (
-          e.target.classList.contains("desktop-content") ||
-          e.target.classList.contains("desktop-icons")
+          (e.target as HTMLElement).classList.contains("desktop-content") ||
+          (e.target as HTMLElement).classList.contains("desktop-icons")
         ) {
           setSelectedIcons(new Set());
         }
         setContextMenu({ ...contextMenu, show: false });
       }}
-      onContextMenu={handleDesktopContextMenu}
+      onContextMenu={handleDesktopContextMenu as any}
     >
       {!disclaimerAccepted && (
         <Disclaimer 
@@ -574,7 +638,7 @@ const Desktop = () => {
               className={`desktop-item ${
                 selectedIcons.has(item.id) ? "selected" : ""
               }`}
-              onClick={(e) => handleDesktopItemClick(e, item)}
+              onClick={(e) => handleDesktopItemClick(e as any, item)}
               tabIndex={0}
             >
               <div className="desktop-item-icon icon">
@@ -630,19 +694,19 @@ const Desktop = () => {
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              e.currentTarget.classList.add('drag-over');
+              (e.currentTarget as HTMLElement).classList.add('drag-over');
             }}
             onDragLeave={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              e.currentTarget.classList.remove('drag-over');
+              (e.currentTarget as HTMLElement).classList.remove('drag-over');
             }}
             onDrop={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              e.currentTarget.classList.remove('drag-over');
+              (e.currentTarget as HTMLElement).classList.remove('drag-over');
               
-              const files = Array.from(e.dataTransfer.files);
+              const files = Array.from(e.dataTransfer!.files);
               const pkgFile = files.find(file => file.name.toLowerCase().endsWith('.pkg'));
               
               if (pkgFile) {
@@ -662,7 +726,7 @@ const Desktop = () => {
               ref={fileInputRef} 
               style={{ display: 'none' }} 
               accept=".pkg"
-              onChange={handleFileInputChange}
+              onChange={handleFileInputChange as any}
             />
             <div className="dropzone-content">
               {pkgUploadStatus.uploading ? (
@@ -744,7 +808,7 @@ const Desktop = () => {
                   isStorageLoading={isStorageLoading}
                   storageError={storageError}
                   language={language}
-                  onOpenWindow={(options) => {
+                  onOpenWindow={(options: {app: string; title: string; props: Record<string, any>}) => {
                     // options: { app, title, props }
                     openWindow(options.app, options.props, options.title);
                   }}
@@ -762,7 +826,7 @@ const Desktop = () => {
         onWindowClick={(id, isActive) => {
           const window = windows.find((w) => w.id === id);
 
-          if (window.minimized) {
+          if (window && window.minimized) {
             const desktopRect = document
               .querySelector(".desktop-content")
               ?.getBoundingClientRect();
@@ -800,7 +864,7 @@ const Desktop = () => {
             setActiveWindow(null);
           }
 
-          if (!isActive && !window.minimized) {
+          if (!isActive && window && !window.minimized) {
             setActiveWindow(id);
           }
         }}
@@ -822,7 +886,7 @@ const Desktop = () => {
                 placeholder="Enter package URL (e.g., http://example.com/game.pkg)"
                 value={packageUrl}
                 style={{width: "94%"}}
-                onChange={(e) => setPackageUrl(e.target.value)}
+                onChange={(e) => setPackageUrl((e.target as HTMLInputElement).value)}
                 disabled={urlInstallStatus.loading}
               />
               {urlInstallStatus.error && (
@@ -849,3 +913,4 @@ const Desktop = () => {
 };
 
 export default Desktop;
+

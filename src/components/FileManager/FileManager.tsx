@@ -3,39 +3,78 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import "./FileManager.css";
 import IconService from "../../services/IconService";
 import ApiService from "../../services/ApiService";
-import ToastService from "../../services/ToastService.jsx";
+import ToastService from "../../services/ToastService";
 
-const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWindow }) => {
+interface FileManagerProps {
+  contextMenu: ContextMenuState;
+  setContextMenu: (menu: ContextMenuState) => void;
+  isDarkMode?: boolean;
+  onOpenWindow?: (config: WindowConfig) => void;
+}
+
+interface ContextMenuState {
+  show: boolean;
+  x: number;
+  y: number;
+  item?: FileItem | null;
+  isBackground?: boolean;
+}
+
+interface WindowConfig {
+  app: string;
+  title: string;
+  props: Record<string, any>;
+}
+
+interface FileItem {
+  id: string | number;
+  name: string;
+  type: string;
+  isDirectory?: boolean;
+}
+
+interface SelectionBox {
+  isSelecting: boolean;
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+}
+
+interface LastClickTime {
+  id: string | number | null;
+  time: number;
+}
+
+const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWindow }: FileManagerProps) => {
   // Let's put the path related states at the top
   const [currentPath, setCurrentPath] = useState('/');
   const [pathHistory, setPathHistory] = useState(['/']);
   const [historyIndex, setHistoryIndex] = useState(0);
 
   // Other states
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectionBox, setSelectionBox] = useState({
+  const [error, setError] = useState<string | null>(null);
+  const [selectionBox, setSelectionBox] = useState<SelectionBox>({
     isSelecting: false,
     start: { x: 0, y: 0 },
     end: { x: 0, y: 0 },
   });
-  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [selectedItems, setSelectedItems] = useState<Set<string | number>>(new Set());
   const [isDragged, setIsDragged] = useState(false);
-  const [lastClickTime, setLastClickTime] = useState({ id: null, time: 0 });
+  const [lastClickTime, setLastClickTime] = useState<LastClickTime>({ id: null, time: 0 });
   const [focusedItemIndex, setFocusedItemIndex] = useState(-1);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  const [renamingItemId, setRenamingItemId] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(null);
-  const [uploadError, setUploadError] = useState(null);
-  const [loadingImages, setLoadingImages] = useState(new Set());
+  const [renamingItemId, setRenamingItemId] = useState<string | number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [loadingImages, setLoadingImages] = useState<Set<string | number>>(new Set());
 
   // Ref definition
-  const fileManagerRef = useRef(null);
+  const fileManagerRef = useRef<HTMLDivElement>(null);
 
   // Load files
-  const loadFiles = async (path) => {
+  const loadFiles = async (path: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -63,19 +102,19 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     setLoadingImages(new Set(imageItemIds));
   }, [items]);
 
-  const handlePathChange = (e) => {
+  const handlePathChange = (e: Event) => {
     // To avoid the TypeScript warning
     const inputValue = e.target instanceof HTMLInputElement ? e.target.value : '';
     setCurrentPath(inputValue);
   };
 
-  const handlePathKeyDown = (e) => {
+  const handlePathKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
       navigateToPath(currentPath);
     }
   };
 
-  const navigateToPath = async (path) => {
+  const navigateToPath = async (path: string) => {
     const normalizedPath = path.endsWith('/') ? path : path + '/';
     
     // Clear context menu
@@ -112,10 +151,10 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
   };
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!fileManagerRef.current?.contains(document.activeElement) ||
-          document.activeElement.tagName === 'INPUT' ||
-          document.activeElement.tagName === 'TEXTAREA') {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!fileManagerRef.current?.contains(document.activeElement as Node) ||
+          (document.activeElement as HTMLElement).tagName === 'INPUT' ||
+          (document.activeElement as HTMLElement).tagName === 'TEXTAREA') {
         return;
       }
 
@@ -129,7 +168,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
             
             setSelectedItems(new Set([items[nextIndex].id]));
             
-            const fileItem = fileManagerRef.current.querySelector(
+            const fileItem = fileManagerRef.current?.querySelector(
               `[data-id="${items[nextIndex].id}"]`
             );
             fileItem?.scrollIntoView({ block: 'nearest' });
@@ -152,8 +191,8 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
   }, [items, focusedItemIndex]);
 
   useEffect(() => {
-    const handleGlobalMouseMove = (e) => {
-      if (selectionBox.isSelecting) {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (selectionBox.isSelecting && fileManagerRef.current) {
         const rect = fileManagerRef.current.getBoundingClientRect();
         let x = e.clientX - rect.left;
         let y = e.clientY - rect.top;
@@ -187,27 +226,27 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     };
   }, [selectionBox.isSelecting]);
 
-  const handleMouseDown = (e) => {
-    if (e.target.closest('.context-menu')) {
+  const handleMouseDown = (e: MouseEvent) => {
+    if ((e.target as Element).closest('.context-menu')) {
       return;
     }
 
     e.preventDefault();
 
-    if (e.target.closest(".file-item")) {
+    if ((e.target as Element).closest(".file-item")) {
       return;
     }
 
     if (
-      e.target.classList.contains("file-grid") &&
-      e.clientX >= e.target.getBoundingClientRect().right - 20
+      (e.target as Element).classList.contains("file-grid") &&
+      e.clientX >= (e.target as Element).getBoundingClientRect().right - 20
     ) {
       return;
     }
 
     setContextMenu({ ...contextMenu, show: false });
 
-    if (e.button === 0) { // Left click
+    if (e.button === 0 && fileManagerRef.current) { // Left click
       const rect = fileManagerRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -218,7 +257,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
         end: { x, y },
       });
 
-      if (!e.ctrlKey && !e.target.closest(".file-item")) {
+      if (!e.ctrlKey && !(e.target as Element).closest(".file-item")) {
         setSelectedItems(new Set());
       }
 
@@ -226,7 +265,9 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     }
   };
 
-  const updateSelection = (currentX, currentY, isCtrlKey) => {
+  const updateSelection = (currentX: number, currentY: number, isCtrlKey: boolean) => {
+    if (!fileManagerRef.current) return;
+    
     const rect = fileManagerRef.current.getBoundingClientRect();
 
     currentX = Math.max(0, Math.min(currentX, rect.width));
@@ -269,8 +310,8 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     setSelectedItems(newSelectedItems);
   };
 
-  const handleMouseUp = (e) => {
-    if (selectionBox.isSelecting) {
+  const handleMouseUp = (e: MouseEvent) => {
+    if (selectionBox.isSelecting && fileManagerRef.current) {
       const rect = fileManagerRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -286,7 +327,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     setTimeout(() => setIsDragged(false), 0);
   };
 
-  const handleItemClick = (e, item) => {
+  const handleItemClick = (e: MouseEvent, item: FileItem) => {
     e.stopPropagation();
 
     if (!isDragged) {
@@ -335,7 +376,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     }
   };
 
-  const handleDoubleClick = (item) => {
+  const handleDoubleClick = (item: FileItem) => {
     if (item.isDirectory) {
       // Clear context menu
       setContextMenu({ ...contextMenu, show: false });
@@ -356,7 +397,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
   };
 
   // Ses dosyası mı kontrol eder
-  const isAudioFile = (fileName) => {
+  const isAudioFile = (fileName: string): boolean => {
     if (!fileName) return false;
     const audioExtensions = ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'];
     const lowerCaseFileName = fileName.toLowerCase();
@@ -364,7 +405,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
   };
 
   // Video dosyası mı kontrol eder
-  const isVideoFile = (fileName) => {
+  const isVideoFile = (fileName: string): boolean => {
     if (!fileName) return false;
     const videoExtensions = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v'];
     const lowerCaseFileName = fileName.toLowerCase();
@@ -372,18 +413,18 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
   };
 
   // Resim dosyası mı kontrol eder
-  const isImageFile = (fileName) => {
+  const isImageFile = (fileName: string): boolean => {
     if (!fileName) return false;
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
     const lowerCaseFileName = fileName.toLowerCase();
     return imageExtensions.some(ext => lowerCaseFileName.endsWith(ext));
   };
 
-  const isAudioVideoFile = (fileName) => {
+  const isAudioVideoFile = (fileName: string): boolean => {
     return isAudioFile(fileName) || isVideoFile(fileName);
   };
 
-  const openMediaPlayer = (item) => {
+  const openMediaPlayer = (item: FileItem) => {
     if (onOpenWindow) {
       onOpenWindow({
         app: 'mediaPlayer',
@@ -396,7 +437,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     }
   };
 
-  const openImageViewer = (item) => {
+  const openImageViewer = (item: FileItem) => {
     if (onOpenWindow) {
       onOpenWindow({
         app: 'imageViewer',
@@ -409,7 +450,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     }
   };
 
-  const handleContextMenu = (e, item) => {
+  const handleContextMenu = (e: MouseEvent, item: FileItem) => {
     if (!selectionBox.isSelecting) {
       e.preventDefault();
 
@@ -427,13 +468,14 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     }
   };
 
-  const handleDownload = (item) => {
+  const handleDownload = (item: FileItem) => {
     // Create full paths to all selected files
     const selectedPaths = Array.from(selectedItems)
       .map(id => {
         const selectedItem = items.find(item => item.id === id);
-        return currentPath + selectedItem.name;
-      });
+        return selectedItem ? currentPath + selectedItem.name : '';
+      })
+      .filter(path => path !== '');
 
     // If there are no selected files, download only the clicked file
     const pathsToDownload = selectedPaths.length > 0 
@@ -450,10 +492,10 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     setContextMenu({ ...contextMenu, show: false });
   };
 
-  const handleDelete = (item) => {
+  const handleDelete = (item: FileItem) => {
     const itemsToDelete = Array.from(selectedItems).map(id => 
       items.find(item => item.id === id)
-    );
+    ).filter((item): item is FileItem => item !== undefined);
 
     const fileList = itemsToDelete
       .map(item => `• ${item.name}`)
@@ -473,11 +515,12 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     setContextMenu({ ...contextMenu, show: false });
   };
 
-  const handleBackgroundContextMenu = (e) => {
+  const handleBackgroundContextMenu = (e: MouseEvent) => {
     e.preventDefault();
+    const target = e.target as Element;
     if (
-      e.target.classList.contains("file-manager") ||
-      e.target.classList.contains("file-grid")
+      target.classList.contains("file-manager") ||
+      target.classList.contains("file-grid")
     ) {
       if (selectedItems.size > 0) {
         const firstSelectedItem = items.find(
@@ -503,8 +546,8 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
   };
 
   const createNewFolder = () => {
-    const newId = Math.max(...items.map((item) => item.id)) + 1;
-    const newFolder = {
+    const newId = Math.max(...items.map((item) => Number(item.id))) + 1;
+    const newFolder: FileItem = {
       id: newId,
       name: "New Folder",
       type: "folder",
@@ -513,14 +556,16 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     setContextMenu({ ...contextMenu, show: false });
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
   };
 
-  const handleDrop = async (e) => {
+  const handleDrop = async (e: DragEvent) => {
     e.preventDefault();
-    const files = Array.from(e.dataTransfer.files);
+    const files = e.dataTransfer ? Array.from(e.dataTransfer.files) : [];
 
     if (files.length > 0) {
       setUploadProgress(0);
@@ -537,19 +582,19 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
         loadFiles(currentPath);
       } catch (error) {
         console.error('Upload failed:', error);
-        setUploadError(error.message);
+        setUploadError((error as Error).message);
       }
     }
   };
 
-  const handleRename = (item) => {
+  const handleRename = (item: FileItem) => {
     setRenamingItemId(item.id);
     setRenameValue(item.name);
     setIsRenaming(true);
     setContextMenu({ ...contextMenu, show: false });
   };
 
-  const handleRenameSubmit = async (item) => {
+  const handleRenameSubmit = async (item: FileItem) => {
     try {
       if (renameValue && renameValue !== item.name) {
         await ApiService.renameFile(currentPath + item.name, renameValue);
@@ -564,7 +609,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     }
   };
 
-  const handleExecutePayload = async (item) => {
+  const handleExecutePayload = async (item: FileItem) => {
     try {
       const response = await ApiService.executePayload(currentPath + item.name);
       if (response.success) {
@@ -579,7 +624,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
     setContextMenu({ ...contextMenu, show: false });
   };
 
-  const handleInstallPackage = async (item) => {
+  const handleInstallPackage = async (item: FileItem) => {
     try {
       // Get all selected items
       const selectedFilePaths = Array.from(selectedItems)
@@ -587,7 +632,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
           const selectedItem = items.find(item => item.id === id);
           return selectedItem;
         })
-        .filter(item => item && item.name.toLowerCase().endsWith('.pkg'))
+        .filter((item): item is FileItem => item !== undefined && item.name.toLowerCase().endsWith('.pkg'))
         .map(item => currentPath + item.name);
 
       // If no PKG files are in the selection, just install the right-clicked item
@@ -614,7 +659,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
       }
     } catch (err) {
       console.error("Package installation failed:", err);
-      ToastService.error(err.message || "Failed to install package");
+      ToastService.error((err as Error).message || "Failed to install package");
     }
     setContextMenu({ ...contextMenu, show: false });
   };
@@ -731,7 +776,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
                   type="text"
                   className="rename-input"
                   value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
+                  onChange={(e) => setRenameValue((e.target as HTMLInputElement).value)}
                   onBlur={() => handleRenameSubmit(item)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -789,7 +834,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
               <>
                 <div
                     className="context-menu-item install"
-                    onClick={() => handleInstallPackage(contextMenu.item)}
+                    onClick={() => handleInstallPackage(contextMenu.item!)}
                 >
                   Install Package
                 </div>
@@ -801,7 +846,7 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
                 <div className="context-menu-separator" />
                 <div
                     className="context-menu-item execute"
-                    onClick={() => handleExecutePayload(contextMenu.item)}
+                    onClick={() => handleExecutePayload(contextMenu.item!)}
                 >
                   Execute Payload
                 </div>
@@ -815,20 +860,20 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
             <>
               <div
                 className="context-menu-item download"
-                onClick={() => handleDownload(contextMenu.item)}
+                onClick={() => handleDownload(contextMenu.item!)}
               >
                 Download
               </div>
               <div
                 className="context-menu-item rename"
-                onClick={() => handleRename(contextMenu.item)}
+                onClick={() => handleRename(contextMenu.item!)}
               >
                 Rename
               </div>
               <div className="context-menu-separator" />
               <div
                 className="context-menu-item delete"
-                onClick={() => handleDelete(contextMenu.item)}
+                onClick={() => handleDelete(contextMenu.item!)}
               >
                 Delete
               </div> 
@@ -841,3 +886,4 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
 };
 
 export default FileManager;
+

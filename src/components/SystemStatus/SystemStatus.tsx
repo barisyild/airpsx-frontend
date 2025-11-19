@@ -3,11 +3,35 @@ import { useState, useEffect } from "preact/hooks";
 import ApiService from "../../services/ApiService";
 import "./SystemStatus.css";
 
-const SystemStatus = ({ isDarkMode }) => {
-  const [systemInfo, setSystemInfo] = useState(null);
-  const [error, setError] = useState(null);
+interface SystemStatusProps {
+  isDarkMode: boolean;
+}
+
+interface CPUInfo {
+  mode: number;
+  frequency: number;
+  temperature: number;
+  socSensorTemperature: number;
+}
+
+interface AppInfo {
+  titleID: string;
+  titleName?: string;
+  comm: string;
+  pid: number;
+  start: number;
+}
+
+interface SystemInfo {
+  cpu: CPUInfo;
+  app?: AppInfo;
+}
+
+const SystemStatus = ({ isDarkMode }: SystemStatusProps) => {
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [updatedFields, setUpdatedFields] = useState(new Set());
+  const [updatedFields, setUpdatedFields] = useState<Set<string>>(new Set());
   const [uptimeRefresh, setUptimeRefresh] = useState(0);
 
   useEffect(() => {
@@ -23,7 +47,7 @@ const SystemStatus = ({ isDarkMode }) => {
       const data = await ApiService.getSystemStatus();
 
       // Detect changing values
-      const changed = new Set();
+      const changed = new Set<string>();
       if (systemInfo) {
         if (Math.abs(data.cpu.frequency - systemInfo.cpu.frequency) > 50000000)
           changed.add("frequency");
@@ -57,7 +81,7 @@ const SystemStatus = ({ isDarkMode }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const formatUptime = (startTime) => {
+  const formatUptime = (startTime: number): string => {
     if (!startTime) return "--:--:--";
 
     const now = Math.floor(Date.now() / 1000);
@@ -67,12 +91,12 @@ const SystemStatus = ({ isDarkMode }) => {
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = uptime % 60;
 
-    const pad = (num) => String(num).padStart(2, "0");
+    const pad = (num: number) => String(num).padStart(2, "0");
 
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
-  const getCPUModeText = (mode) => {
+  const getCPUModeText = (mode: number): string => {
     switch (mode) {
       case 0:
         return "6CPU";
@@ -85,7 +109,7 @@ const SystemStatus = ({ isDarkMode }) => {
     }
   };
 
-  const getValueClassName = (field, value) => {
+  const getValueClassName = (field: string, value: number): string => {
     let className = "info-value";
     if (updatedFields.has(field)) className += " updated";
     if (field.includes("temperature") && value > 45) className += " warning";
@@ -119,7 +143,7 @@ const SystemStatus = ({ isDarkMode }) => {
                 <img
                   src={ApiService.getTitleImageUrl(systemInfo.app.titleID)}
                   alt={systemInfo.app.titleName || systemInfo.app.titleID}
-                  onError={(e) => (e.target.style.display = "none")}
+                  onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
                 />
               </div>
               <div className="game-details">
@@ -194,3 +218,4 @@ const SystemStatus = ({ isDarkMode }) => {
 };
 
 export default SystemStatus;
+

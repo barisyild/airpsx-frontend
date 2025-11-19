@@ -1,27 +1,49 @@
 const API_URL = import.meta.env.VITE_API_URL.endsWith('/') ? import.meta.env.VITE_API_URL.slice(0, -1) : import.meta.env.VITE_API_URL;
 
-class PackageQueueService {
-    static queue = new Set(); // Set for O(1) lookup and automatic deduplication
-    static sessionKey = null;
-    static file = null;
-    static id = 0;
-    static isRunning = false;
-    static onProgressCallback = null;
-    static totalChunks = 0;
-    static uploadedChunks = 0;
-    static onCompleteCallback = null;
-    static onErrorCallback = null;
-    static uploadedBytes = 0;
-    static totalBytes = 0;
-    static chunkProgress = {}; // Tracks each chunk's upload status
-    static pendingChunks = new Map(); // Map<key, chunkObject> for O(1) lookup and full chunk data storage
-    static emptyRetryCount = 0; // Empty or duplicate response counter
-    static errorRetryCount = 0; // Network/API error counter
-    static maxEmptyRetries = 3; // Maximum empty retry attempts
-    static maxErrorRetries = 3; // Maximum error retry attempts
-    static activeXHRs = []; // Active XHR requests to cancel if needed
+interface ChunkData {
+    key: string;
+    start: number;
+    end: number;
+    [key: string]: any;
+}
 
-    static reset() {
+interface ChunkProgress {
+    total: number;
+    uploaded: number;
+}
+
+interface UploadResponse {
+    chunks?: ChunkData[];
+    sessionKey?: string;
+    [key: string]: any;
+}
+
+type ProgressCallback = (progress: number) => void;
+type CompleteCallback = (data: any) => void;
+type ErrorCallback = (error: Error) => void;
+
+class PackageQueueService {
+    static queue: Set<string> = new Set(); // Set for O(1) lookup and automatic deduplication
+    static sessionKey: string | null = null;
+    static file: File | null = null;
+    static id: number = 0;
+    static isRunning: boolean = false;
+    static onProgressCallback: ProgressCallback | null = null;
+    static totalChunks: number = 0;
+    static uploadedChunks: number = 0;
+    static onCompleteCallback: CompleteCallback | null = null;
+    static onErrorCallback: ErrorCallback | null = null;
+    static uploadedBytes: number = 0;
+    static totalBytes: number = 0;
+    static chunkProgress: { [key: string]: ChunkProgress } = {}; // Tracks each chunk's upload status
+    static pendingChunks: Map<string, ChunkData> = new Map(); // Map<key, chunkObject> for O(1) lookup and full chunk data storage
+    static emptyRetryCount: number = 0; // Empty or duplicate response counter
+    static errorRetryCount: number = 0; // Network/API error counter
+    static maxEmptyRetries: number = 3; // Maximum empty retry attempts
+    static maxErrorRetries: number = 3; // Maximum error retry attempts
+    static activeXHRs: XMLHttpRequest[] = []; // Active XHR requests to cancel if needed
+
+    static reset(): void {
         // Cancel all active XHR requests
         this.activeXHRs.forEach(xhr => {
             try {
@@ -50,7 +72,7 @@ class PackageQueueService {
         this.activeXHRs = [];
     }
 
-    static updateProgress() {
+    static updateProgress(): void {
         if (this.onProgressCallback && this.totalBytes > 0) {
             // Sum up uploaded bytes from all chunks
             let totalUploaded = 0;
@@ -73,7 +95,13 @@ class PackageQueueService {
         }
     }
 
-    static async startQueue(file, sessionKey, onProgress, onComplete, onError) {
+    static async startQueue(
+        file: File,
+        sessionKey: string,
+        onProgress: ProgressCallback,
+        onComplete: CompleteCallback,
+        onError: ErrorCallback
+    ): Promise<void> {
         this.file = file;
         this.sessionKey = sessionKey;
         this.onProgressCallback = onProgress;
@@ -86,7 +114,7 @@ class PackageQueueService {
         this.getPackageList();
     }
 
-    static async getPackageList() {
+    static async getPackageList(): Promise<void> {
         if (!this.isRunning) {
             return;
         }
@@ -107,7 +135,7 @@ class PackageQueueService {
                 throw new Error(`List API returned ${response.status}: ${response.statusText}`);
             }
 
-            const jsonData = await response.json();
+            const jsonData: UploadResponse = await response.json();
             
             // Successfully received response, reset error counter
             this.errorRetryCount = 0;
@@ -184,7 +212,7 @@ class PackageQueueService {
                 this.emptyRetryCount = 0;
             }
 
-            await this.manageChunks(this.file, jsonData.sessionKey, jsonData.chunks);
+            await this.manageChunks(this.file!, jsonData.sessionKey!, jsonData.chunks || []);
 
             // Uploads completed, fetch new list (pending chunks are processed in manageChunks)
             if (this.isRunning) {
@@ -192,7 +220,8 @@ class PackageQueueService {
             }
         } catch (error) {
             this.errorRetryCount++;
-            console.error(`Package list error (${this.errorRetryCount}/${this.maxErrorRetries}):`, error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error(`Package list error (${this.errorRetryCount}/${this.maxErrorRetries}):`, errorMessage);
             
             // Reached max error retries?
             if (this.errorRetryCount >= this.maxErrorRetries) {
@@ -214,7 +243,7 @@ class PackageQueueService {
         }
     }
 
-    static async uploadChunk(file, sessionKey, data) {
+    static async uploadChunk(file: File, sessionKey: string, data: ChunkData): Promise<UploadResponse> {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             const formData = new FormData();
@@ -259,7 +288,7 @@ class PackageQueueService {
                     
                     // Add chunks from response to pending list
                     try {
-                        const response = JSON.parse(xhr.responseText);
+                        const response: UploadResponse = JSON.parse(xhr.responseText);
                         
                         if (response.chunks && Array.isArray(response.chunks) && response.chunks.length > 0) {
                             console.log(`[UploadChunk] ${data.key} completed, ${response.chunks.length} chunks in response`);
@@ -315,7 +344,7 @@ class PackageQueueService {
         });
     }
 
-    static async manageChunks(file, sessionKey, dataList) {
+    static async manageChunks(file: File, sessionKey: string, dataList: ChunkData[]): Promise<void> {
         if (!dataList || dataList.length === 0) {
             return;
         }
@@ -326,10 +355,10 @@ class PackageQueueService {
             this.totalChunks = dataList.length;
         }
 
-        const uploadPromises = [];
+        const uploadPromises: Promise<void>[] = [];
 
         for (let i = 0; i < dataList.length; i++) {
-            let data = dataList[i];
+            const data = dataList[i];
             
             // Skip if chunk is already in queue - O(1) with Set
             if (this.queue.has(data.key)) {
@@ -347,7 +376,7 @@ class PackageQueueService {
                     this.queue.delete(data.key);
                     // Also clear chunk progress
                     delete this.chunkProgress[data.key];
-                })
+                }).then(() => {})
             );
         }
 
@@ -384,16 +413,15 @@ class PackageQueueService {
         }
     }
 
-    static stopQueue() {
+    static stopQueue(): void {
         this.isRunning = false;
         this.reset();
     }
 
-    static getSessionKey() {
-        return this.sessionKey;
+    static getSessionKey(): string {
+        return this.sessionKey || '';
     }
 }
 
 export default PackageQueueService;
-
 
