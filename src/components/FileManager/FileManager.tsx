@@ -91,9 +91,17 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
   // Refresh files when path changes
   useEffect(() => {
     loadFiles(currentPath);
+    // Clear selected item list
+    setSelectedItems(new Set());
+    setFocusedItemIndex(-1);
   }, [currentPath]);
 
-  useEffect(() => {
+  // Refresh page
+  const handleRefresh = () => {
+    loadFiles(currentPath);
+  };
+
+    useEffect(() => {
     // Add all image items to loading state initially
     const imageItemIds = items
       .filter(item => isImageFile(item.name))
@@ -698,6 +706,14 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
             ▲
           </button>
         </div>
+        <button
+            className="refresh-button icon"
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Refresh"
+        >
+          🔄
+        </button>
         <input
           type="text"
           className="path-input"
@@ -843,19 +859,22 @@ const FileManager = ({ contextMenu, setContextMenu, isDarkMode = true, onOpenWin
           )}
           {(!contextMenu.isBackground && contextMenu.item && contextMenu.item.name && (contextMenu.item.name.endsWith('.elf') || contextMenu.item.name.endsWith('.bin'))) && (
               <>
-                <div className="context-menu-separator" />
                 <div
                     className="context-menu-item execute"
                     onClick={() => handleExecutePayload(contextMenu.item!)}
                 >
                   Execute Payload
                 </div>
+                <div className="context-menu-separator" />
               </>
           )}
           {contextMenu.isBackground ? (
-            <div className="context-menu-item create-folder">
-              Create Folder
-            </div>
+              <div
+                  className="context-menu-item create-folder"
+                  onClick={createNewFolder}
+              >
+                Create Folder
+              </div>
           ) : (
             <>
               <div
