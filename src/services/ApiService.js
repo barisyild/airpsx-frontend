@@ -1,6 +1,5 @@
 import PackageQueueService from './PackageQueueService.js';
-import {OrbisPkgParser} from "../class/OrbisPkgReader.js";
-import {ProsperoPkgParser} from "../class/ProsperoPkgParser.js";
+import {PackageService} from "./PackageService.js";
 
 const API_URL = import.meta.env.VITE_API_URL.endsWith('/') ? import.meta.env.VITE_API_URL.slice(0, -1) : import.meta.env.VITE_API_URL;
 class ApiService {
@@ -352,105 +351,49 @@ class ApiService {
         return json.path;
     }
 
+    static getApiUrl() {
+        return API_URL;
+    }
+
+    // Main Static Method
     static async uploadPkg(file, onProgress, onComplete) {
+        // 1. Extract Metadata
+        const { title, titleId, iconPath } = await PackageService.extractMetadataFromFile(file);
+
+        // 2. Initialize Upload
+        // Using URLSearchParams ensures parameters are safely encoded
+        const params = new URLSearchParams({
+            size: file.size,
+            titleId: titleId,
+            title: title,
+            iconPath: iconPath || 'null'
+        });
+
+        const response = await fetch(`${API_URL}/api/package/upload/init?${params}`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+
+        const { sessionKey } = await response.json();
+
+        // 3. Start Queue
+        // Wrap the callback-based service in a Promise to await its completion
         return new Promise((resolve, reject) => {
-            (async () => {
-                const magicBuffer = await file.slice(0, 4).arrayBuffer();
-                const magicBufferView = new DataView(magicBuffer);
-                const magic = magicBufferView.getUint32(0x00, false);
-
-                var title = "CUSA12345";
-                var titleId = "CUSA12345";
-                var iconPath = null;
-
-                // Prospero PKG
-                if(magic === 0x7F464948)
-                {
-                    try {
-                        var prosperoPkgParser = new ProsperoPkgParser(file);
-                        const { sfo, icon } = await prosperoPkgParser.parsePkg();
-                        title = sfo.TITLE;
-                        titleId = sfo.TITLE_ID;
-                        iconPath = `${API_URL}/api/fs/stream/${await ApiService.tempFile(icon)}`;
-                    } catch (e) {
-                        console.error("Error parsing Prospero PKG:", e);
-                        try {
-                            // Try with metadata
-                            const packageBuffer = await file.slice(0x58, 0x58 + 8).arrayBuffer();
-                            const packageBufferView = new DataView(packageBuffer);
-                            let packageOffset = parseInt(packageBufferView.getBigInt64(0, true));
-
-                            const titleBuffer = await file.slice(packageOffset + 0x47, packageOffset + 0x47 + 9).arrayBuffer();
-                            const titleBufferView = new DataView(titleBuffer);
-                            title = titleId = new TextDecoder().decode(titleBufferView);
-                        } catch (ex) {
-                            console.error("Error parsing Prospero Metadata:", ex);
-                        }
-                    }
-                }
-                // Orbis PKG
-                else if (magic === 0x7F434E54)
-                {
-                    try {
-                        var orbisPkgParser = new OrbisPkgParser(file);
-                        const { sfo, icon } = await orbisPkgParser.parsePkg();
-                        title = sfo.TITLE;
-                        titleId = sfo.TITLE_ID;
-                        iconPath = `${API_URL}/api/fs/stream/${await ApiService.tempFile(icon)}`;
-                    } catch (e) {
-                        console.error("Error parsing Orbis PKG:", e);
-                        try {
-                            // Try with metadata
-                            title = titleId = new TextDecoder().decode(await file.slice(0x47, 0x47 + 9).arrayBuffer());
-                        } catch (ex) {
-                            console.error("Error parsing Orbis Metadata:", ex);
-                        }
-                    }
-                }
-                else {
-                    reject(new Error("Invalid PKG file."));
-                    return;
-                }
-
-                try {
-                    const xhr = new XMLHttpRequest();
-                    const formData = new FormData();
-
-                    xhr.open('POST', `${API_URL}/api/package/upload/init?size=${file.size}&titleId=${titleId}&title=${title}&iconPath=${iconPath}`, true);
-
-                    xhr.onload = () => {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            const jsonData = JSON.parse(xhr.responseText);
-
-                            // Start the queue
-                            PackageQueueService.startQueue(
-                                file,
-                                jsonData.sessionKey,
-                                onProgress,
-                                (completeData) => {
-                                    if (onComplete) {
-                                        onComplete(completeData);
-                                    }
-                                    resolve(completeData);
-                                },
-                                (error) => {
-                                    reject(error);
-                                }
-                            );
-                        } else {
-                            reject(new Error('Network response was not ok'));
-                        }
-                    };
-
-                    xhr.onerror = () => reject(new Error('Network error'));
-
-                    xhr.send(formData);
-                } catch (error) {
+            PackageQueueService.startQueue(
+                file,
+                sessionKey,
+                onProgress,
+                (completeData) => {
+                    if (onComplete) onComplete(completeData);
+                    resolve(completeData);
+                },
+                (error) => {
                     reject(error);
                 }
-            })();
-
-
+            );
         });
     }
 
