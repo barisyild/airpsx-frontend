@@ -36,7 +36,17 @@
     border-bottom: 2px solid #ddd;
     background: inherit;
   }
-  
+
+  .process-list thead tr:hover {
+    background: #f5f5f5;
+    cursor: default;
+  }
+
+  .process-list.dark thead tr:hover {
+    background: #2d2d2d;
+    cursor: default;
+  }
+
   .process-list tbody {
     padding-top: 10px;
   }

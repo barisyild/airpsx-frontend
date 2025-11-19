@@ -26,6 +26,36 @@ const Applications = ({ isDarkMode }: ApplicationsProps) => {
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
   const [runStatus, setRunStatus] = useState<RunStatus | null>(null);
   const appTitleIdBlackList = [
+      "CUSA00001", //PS4 - The PlayRoom
+      "CUSA00219", //PS4 - Destiny Advertisement
+      "CUSA00568", //PS4 - Destiny Advertisement
+      "CUSA00572", //PS4 - Share Factory
+      "CUSA00960", //PS4 - Playstation Vue
+      "CUSA01000", //PS4 - Destiny Advertisement
+      "CUSA01697", //PS4 - Playstation Now
+      "CUSA01780", //PS4 - Spotify
+      "CUSA02012", //PS4 - Media Player
+      "NPIA06503", //PS4 - PlayStation Now
+      "NPXS20102", //PS4 - Web Browser
+      "NPXS20104", //PS4 - My Content
+      "NPXS20105", //PS4 - Playstation Live
+      "NPXS20106", //PS4 - Music Unlimited
+      "NPXS20107", //PS4 - Playstation My Videos
+      "NPXS20108", //PS4 - What's New
+      "NPXS20109", //PS4 - BD Player
+      "NPXS20110", //PS4 - TV & Video
+      "NPXS20111", //PS4 - Library
+      "NPXS20112", //PS4 - Game Disk
+      "NPXS20114", //PS4 - PlayStation Now
+      "NPXS20117", //PS4 - USB Music Player
+      "NPXS20118", //PS4 - Shared Play
+      "NPXS20132", //PS4 - ???
+      "NPXS20133", //PS4 - ???
+      "NPXS20979", //PS4 - PlayStation Store
+      "NPXS21021", //PS4 - PS5 Remote Play
+      "NPXS20120", //PS4 - Playstation Video
+      "NPXS20123", //PS4 - TV & Video
+      "NPXS20125", //PS4 - TV & Video
       "NPXS40032",
       "NPXS40037",
       "NPXS40047",

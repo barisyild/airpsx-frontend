@@ -418,18 +418,6 @@ const Desktop = () => {
     const index = desktopItems.findIndex((i) => i.id === item.id);
     setSelectedIconIndex(index);
 
-    // Link special case
-    if (item.type === "link") {
-      window.open(item.url, '_blank');
-      return;
-    }
-
-    // Exception for System Info
-    if (item.app === "systemInfo") {
-      setShowSystemDetails(true);
-      return;
-    }
-
     const currentTime = Date.now();
 
     // Double click control
@@ -439,7 +427,13 @@ const Desktop = () => {
       lastClickTime.clickCount === 1
     ) {
       // Double click - open window
-      openWindow(item.app);
+      if (item.app === "systemInfo") {
+          setShowSystemDetails(true);
+      } else if (item.type === "link") {
+          window.open(item.url, '_blank'); // Open link
+      } else {
+          openWindow(item.app);
+      }
       setLastClickTime({ id: null, time: 0, clickCount: 0 });
     } else {
       // One click - choice
